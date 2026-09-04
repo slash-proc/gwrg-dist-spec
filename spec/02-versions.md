@@ -47,8 +47,8 @@ each to render a picker without fetching anything else.
 | `manifest` | yes | URL, relative to this file |
 | `publishedAt` | yes | RFC 3339 |
 | `prerelease` | yes | Boolean |
-| `kind` | yes | `homebrew` or `emulator` |
-| `requiresAbi` | yes | Firmware ABI this build needs |
+| `kind` | yes | `homebrew`, `emulator`, or `converter` |
+| `requiresAbi` | no | Firmware ABI this build needs. Omitted only when `kind` is `converter` |
 | `needsUserFiles` | yes | True if the user must supply a ROM |
 | `bundle` | no | Filename of an [offline bundle](06-bundle.md) for this version |
 
@@ -61,6 +61,18 @@ a count of functions.
 a picker can warn about incompatible firmware and label a version as needing a
 ROM before fetching anything. They must agree with the manifest; the manifest
 wins.
+
+`kind: "converter"` says the manifest has an empty `targets[]`: this version
+publishes a converter and no device binary, and the files it produces are
+installed by something else (see
+[converter-only distributions](03-manifest.md#converter-only-distributions)).
+Then `requiresAbi` is omitted, because there is no binary whose firmware ABI it
+could describe — and a picker must not warn about firmware, because none is
+being installed. `needsUserFiles` keeps its ordinary meaning: true when a tool
+has a required input, which for a converter it almost always does.
+
+Every other `kind` requires `requiresAbi`, and it must match one of the
+manifest's targets.
 
 ## Rules
 

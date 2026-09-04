@@ -53,7 +53,6 @@
         "publishedAt",
         "prerelease",
         "kind",
-        "requiresAbi",
         "needsUserFiles"
       ],
       "additionalProperties": false,
@@ -76,7 +75,8 @@
         "kind": {
           "enum": [
             "homebrew",
-            "emulator"
+            "emulator",
+            "converter"
           ]
         },
         "requiresAbi": {

@@ -3,6 +3,7 @@
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
+import { createHash } from "node:crypto";
 import { check } from "../site/check.js";
 
 const HASH_EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
@@ -177,6 +178,94 @@ set(index({ versions: [
 r = await check("owner/repo", opts);
 expect("catches out-of-order versions",
   errorsOf(r).some((e) => e.includes("newest first")), errorsOf(r).join(" | "));
+
+// A converter and no device binary. The manifest declares targets: [], the
+// index says kind "converter" and omits requiresAbi, and the whole thing is
+// conformant: the files this project produces are installed by something else.
+{
+  const wasm = Buffer.from("\0asm\x01\0\0\0", "latin1");
+  const wasmHash = createHash("sha256").update(wasm).digest("hex");
+
+  const tool = {
+    id: "zelda3-assets",
+    processor: { type: "wasm", version: 1 },
+    title: { en: "Zelda 3 asset extraction" },
+    binary: { file: "extractor.wasm", url: "extractor.wasm", bytes: wasm.length, sha256: wasmHash },
+    limits: { maxMemoryPages: 1024, maxOutputBytes: 4194304 },
+    inputs: [{
+      id: "base", required: true, repeatable: false, label: { en: "Zelda 3 ROM (USA)" },
+      extensions: [".sfc", ".smc"], maxBytes: 4194304,
+      variants: [{ id: "us", sha1: "6D4F10A8B10E10DBE624CB23CF03B88BB8252973", bytes: 1048576 }],
+    }],
+    outputs: [{ id: "assets", filename: "zelda3_assets.dat", role: "data", maxBytes: 4194304 }],
+  };
+
+  const converterManifest = (over = {}) => ({
+    schemaVersion: 1,
+    project: "zelda3",
+    title: "The Legend of Zelda: A Link to the Past",
+    source: { repo: "slash-proc/zelda3", commit: "9225af8", ref: "v1.0.0" },
+    tools: [tool],
+    targets: [],
+    ...over,
+  });
+
+  const converterIndex = (overVersion = {}) => ({
+    schemaVersion: 1,
+    project: "zelda3",
+    title: "The Legend of Zelda: A Link to the Past",
+    repo: "slash-proc/zelda3",
+    releasesUrl: "https://github.com/slash-proc/zelda3/releases",
+    retained: 5,
+    versions: [{
+      tag: "v1.0.0", manifest: "v1.0.0/manifest.json",
+      publishedAt: "2026-09-01T10:00:00Z", prerelease: false,
+      kind: "converter", needsUserFiles: true,
+      ...overVersion,
+    }],
+  });
+
+  const setConverter = (idx, man) => {
+    files = {
+      "/dist/versions.json": Buffer.from(JSON.stringify(idx)),
+      "/dist/v1.0.0/manifest.json": Buffer.from(JSON.stringify(man)),
+      "/dist/v1.0.0/extractor.wasm": wasm,
+    };
+  };
+
+  setConverter(converterIndex(), converterManifest());
+  r = await check("slash-proc/zelda3", { ...opts, hash: true });
+  expect("converter-only project is conformant", r.summary.conformant, errorsOf(r).join(" | "));
+  expect("converter-only project reports no target", r.versions[0].targets.length === 0);
+  expect("converter-only project reports its tool",
+    r.versions[0].tools[0]?.id === "zelda3-assets");
+  expect("converter-only project verifies the module",
+    r.checks.some((c) => c.level === "ok" && c.label.includes("matches its sha256")));
+
+  // The index must say so too.
+  setConverter(converterIndex({ kind: "homebrew" }), converterManifest());
+  r = await check("slash-proc/zelda3", opts);
+  expect("catches an index kind that is not converter",
+    errorsOf(r).some((e) => e.includes('is not "converter"')), errorsOf(r).join(" | "));
+
+  // No device binary means no firmware ABI to state.
+  setConverter(converterIndex({ requiresAbi: { version: 2, minSize: 824 } }), converterManifest());
+  r = await check("slash-proc/zelda3", opts);
+  expect("catches requiresAbi with no device binary",
+    errorsOf(r).some((e) => e.includes("requiresAbi")), errorsOf(r).join(" | "));
+
+  // Neither a target nor a tool declares nothing at all.
+  setConverter(converterIndex(), converterManifest({ tools: [] }));
+  r = await check("slash-proc/zelda3", opts);
+  expect("catches a manifest with neither a target nor a tool",
+    errorsOf(r).some((e) => e.includes("neither a target nor a tool")), errorsOf(r).join(" | "));
+}
+
+// A version with a target must still carry requiresAbi in the index.
+set(index({ versions: [{ ...index().versions[0], requiresAbi: undefined }] }), manifest());
+r = await check("owner/repo", opts);
+expect("catches an index that omits requiresAbi",
+  errorsOf(r).some((e) => e.includes("omits requiresAbi")), errorsOf(r).join(" | "));
 
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");

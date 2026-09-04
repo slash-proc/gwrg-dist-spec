@@ -109,6 +109,20 @@ expect("rejects an upper-case bundle name", validate(upperBundle, versionsSchema
 expect("manifest without a converter", validate(minimal, manifestSchema), true);
 expect("manifest with a converter", validate(full, manifestSchema), true);
 
+// A converter and no device binary: the files it produces are installed by
+// something else.
+const converterOnly = structuredClone(full);
+converterOnly.targets = [];
+expect("converter-only manifest", validate(converterOnly, manifestSchema), true);
+
+const converterIndex = structuredClone(versions);
+converterIndex.project = "zelda3";
+converterIndex.versions[0].kind = "converter";
+converterIndex.versions[0].needsUserFiles = true;
+delete converterIndex.versions[0].requiresAbi;
+expect("versions.json for a converter-only project",
+  validate(converterIndex, versionsSchema), true);
+
 const bad = (name, mutate) => {
   const doc = structuredClone(minimal);
   mutate(doc);
@@ -121,6 +135,7 @@ bad("rejects a destination field", (d) => { d.targets[0].artifacts[0].destinatio
 bad("rejects a path in a filename", (d) => { d.targets[0].artifacts[0].filename = "../evil.bin"; });
 bad("rejects a short sha256", (d) => { d.targets[0].artifacts[0].sha256 = "abc"; });
 bad("rejects a missing tools key", (d) => { delete d.tools; });
+bad("rejects a missing targets key", (d) => { delete d.targets; });
 bad("rejects a future schemaVersion", (d) => { d.schemaVersion = 2; });
 bad("rejects a localised platform label", (d) => { d.targets[0].label = { en: "G&W" }; });
 bad("rejects an absolute url", (d) => { d.targets[0].artifacts[0].url = "https://evil.example/x.bin"; });

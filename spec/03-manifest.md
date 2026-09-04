@@ -18,6 +18,9 @@ Every file in an install comes from one of two places:
 **The install set is every artifact, plus the declared outputs of every tool in
 `uses[]`.** There is no separate list. Nothing to keep in sync.
 
+A project may publish only the second. See
+[converter-only distributions](#converter-only-distributions).
+
 ## Minimal example — no converter
 
 ```json
@@ -55,6 +58,42 @@ Every file in an install comes from one of two places:
 
 `"tools": []` states that no conversion is needed. Write it explicitly. An
 absent key is indistinguishable from a truncated file.
+
+## Converter-only distributions
+
+The mirror image: `"targets": []`, and at least one tool.
+
+```json
+{
+  "schemaVersion": 1,
+  "project": "zelda3",
+  "title": "The Legend of Zelda: A Link to the Past",
+  "source": { "repo": "slash-proc/zelda3", "commit": "9225af8…", "ref": "v1.0.0" },
+  "tools": [ { "id": "zelda3-assets", "…": "as below" } ],
+  "targets": []
+}
+```
+
+**It means: this project publishes a converter; the files it produces are
+installed by something else.** Nothing here goes on a card by itself. An
+installer offers the conversion, hands the outputs to whatever asked for them,
+and looks elsewhere for the binary that reads them.
+
+That is a real division of labour, not a placeholder. A port's assets are
+extracted from the user's own ROM by the project that knows the ROM format,
+while the device binary that consumes them is built by the firmware. Two
+repositories, two release cycles, one install.
+
+`"targets": []` is written explicitly, for the same reason `"tools": []` is.
+
+**A manifest with neither a target nor a tool declares nothing.** It is not
+conformant, and the checker says so.
+
+Do not reach for a target with no artifacts instead. A target is a thing
+somebody installs onto a device; one carrying no files would have to invent an
+`id`, a `platform`, a `label` and a firmware ABI for hardware it does not ship
+a binary for, and every consumer would then need a rule for telling the empty
+ones apart. An empty `targets[]` needs no such rule.
 
 ## Full example — with a converter
 
@@ -144,9 +183,12 @@ absent key is indistinguishable from a truncated file.
 | `title` | yes | Display name |
 | `source` | yes | `repo`, `commit`, `ref` — what built this |
 | `tools` | yes | Converters. `[]` when none |
-| `targets` | yes | One per platform |
+| `targets` | yes | One per platform. `[]` for a [converter-only](#converter-only-distributions) project |
 
 ## Targets
+
+One per platform this project publishes a binary for, and none at all when it
+publishes no binary.
 
 | Field | Required | |
 |---|---|---|
