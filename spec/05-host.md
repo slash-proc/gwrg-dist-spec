@@ -44,6 +44,12 @@ only way to reclaim its memory.
 **Verify artifacts too.** Every artifact carries a `sha256`. Check it. A
 mirror is not a trust boundary.
 
+**A produced binary is checked differently.** A file a converter produces has
+no published hash, because it is derived from what the user supplied and no two
+users need get the same bytes. Check its header instead: read the firmware ABI
+version and minimum size out of the binary itself and compare those against the
+device, rather than trusting the target's advisory `requiresAbi`.
+
 ## Recommended
 
 **Drive the stepped path.** Call `run_begin` then `run_step` in a loop even
