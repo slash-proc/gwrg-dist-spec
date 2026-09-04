@@ -18,6 +18,19 @@ Every file in an install comes from one of two places:
 **The install set is every artifact, plus the declared outputs of every tool in
 `uses[]`.** There is no separate list. Nothing to keep in sync.
 
+A target installs **exactly one binary**, and it may arrive from either half.
+Usually the project ships it as an artifact with `role: "binary"`. It may
+instead be produced, as a tool output with `role: "binary"` — a converter that
+takes the user's ROM and emits a ready-to-run binary rather than a data file.
+A target whose whole install set is produced therefore has an empty
+`artifacts`, which is why the array is required but may be empty. What a target
+may not do is install nothing at all.
+
+When the binary is produced, `requiresAbi` cannot be read from bytes at publish
+time, because the bytes do not exist yet. Treat it as advisory: use it to filter
+versions before a run, and check the real requirement against the produced file
+itself, whose header carries it.
+
 ## Minimal example — no converter
 
 ```json
@@ -154,8 +167,8 @@ absent key is indistinguishable from a truncated file.
 | `platform` | yes | Device family |
 | `label` | yes | Plain string. Not localised — platform names are proper nouns |
 | `kind` | yes | `homebrew` or `emulator` |
-| `requiresAbi` | yes | Firmware ABI needed |
-| `artifacts` | yes | Compiled files |
+| `requiresAbi` | yes | Firmware ABI needed. Advisory when the binary is produced |
+| `artifacts` | yes | Compiled files. May be empty if the binary is produced |
 | `uses` | no | Converters this target needs |
 
 ### Placement

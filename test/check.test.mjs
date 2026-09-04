@@ -6,6 +6,8 @@ import { gzipSync } from "node:zlib";
 import { check } from "../site/check.js";
 
 const HASH_EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+// sha256 of a single zero byte, for fixtures whose schema forbids bytes: 0.
+const HASH_ONE = "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d";
 const schemaDir = new URL("../schema/", import.meta.url);
 
 const manifest = (over = {}) => ({
@@ -116,7 +118,40 @@ twoBinaries.targets[0].artifacts.push({
 set(index(), twoBinaries);
 r = await check("owner/repo", opts);
 expect("catches two binaries in one target",
-  errorsOf(r).some((e) => e.includes('role "binary"')), errorsOf(r).join(" | "));
+  errorsOf(r).some((e) => e.includes("exactly one binary")), errorsOf(r).join(" | "));
+
+// A binary the converter produces counts, so the target ships no artifacts.
+// This is the patcher shape: the user's ROM goes in, a runnable binary
+// comes out, and the project publishes nothing but the converter.
+const produced = manifest();
+produced.tools = [{
+  id: "patcher",
+  title: { en: "Build the binary" },
+  processor: { type: "wasm", version: 1 },
+  binary: { file: "patch.wasm", bytes: 1, sha256: HASH_ONE, url: "patch.wasm" },
+  limits: { maxMemoryPages: 256, maxOutputBytes: 1048576 },
+  inputs: [{
+    id: "rom", required: true, repeatable: false,
+    label: { en: "ROM" }, extensions: [".bin"], maxBytes: 1048576,
+  }],
+  outputs: [{ id: "bin", filename: "minesweeper.bin", role: "binary", maxBytes: 1048576 }],
+}];
+produced.targets[0].artifacts = [];
+produced.targets[0].uses = [{ tool: "patcher", outputs: ["bin"], required: true }];
+set(index({ versions: [{ ...index().versions[0], needsUserFiles: true }] }), produced,
+  { "/dist/v0.1.2/patch.wasm": Buffer.alloc(1) });
+r = await check("owner/repo", opts);
+expect("a produced binary satisfies a target with no artifacts",
+  r.summary.conformant, errorsOf(r).join(" | "));
+
+// ...but a target that installs nothing at all is still an error.
+const installsNothing = manifest();
+installsNothing.targets[0].artifacts = [];
+delete installsNothing.targets[0].uses;
+set(index(), installsNothing);
+r = await check("owner/repo", opts);
+expect("catches a target that installs nothing",
+  errorsOf(r).some((e) => e.includes("installs nothing")), errorsOf(r).join(" | "));
 
 // A declared file that is not published.
 const missing = manifest();

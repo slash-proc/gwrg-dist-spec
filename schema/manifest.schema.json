@@ -3,178 +3,446 @@
   "$id": "https://slash-proc.github.io/gwrg-dist-spec/schema/manifest.schema.json",
   "title": "GWRG dist manifest.json",
   "type": "object",
-  "required": ["schemaVersion", "project", "title", "source", "tools", "targets"],
+  "required": [
+    "schemaVersion",
+    "project",
+    "title",
+    "source",
+    "tools",
+    "targets"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": { "type": "integer", "const": 1 },
-    "project": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-    "title": { "type": "string", "minLength": 1 },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "project": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
     "source": {
       "type": "object",
-      "required": ["repo", "commit", "ref"],
+      "required": [
+        "repo",
+        "commit",
+        "ref"
+      ],
       "additionalProperties": false,
       "properties": {
-        "repo": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
-        "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
-        "ref": { "type": "string", "minLength": 1 }
+        "repo": {
+          "type": "string",
+          "pattern": "^[^/]+/[^/]+$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
-    "tools": { "type": "array", "items": { "$ref": "#/$defs/tool" } },
-    "targets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/target" } }
+    "tools": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tool"
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/target"
+      }
+    }
   },
   "$defs": {
     "localised": {
       "type": "object",
-      "required": ["en"],
-      "propertyNames": { "pattern": "^[a-z]{2}(-[A-Za-z0-9]+)?$" },
-      "additionalProperties": { "type": "string" }
+      "required": [
+        "en"
+      ],
+      "propertyNames": {
+        "pattern": "^[a-z]{2}(-[A-Za-z0-9]+)?$"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "filename": {
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
     },
-    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "requiresAbi": {
       "type": "object",
-      "required": ["version", "minSize"],
+      "required": [
+        "version",
+        "minSize"
+      ],
       "additionalProperties": false,
       "properties": {
-        "version": { "type": "integer", "minimum": 1 },
-        "minSize": { "type": "integer", "minimum": 8 }
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minSize": {
+          "type": "integer",
+          "minimum": 8
+        }
       }
     },
-
     "target": {
       "type": "object",
-      "required": ["id", "platform", "label", "kind", "requiresAbi", "artifacts"],
+      "required": [
+        "id",
+        "platform",
+        "label",
+        "kind",
+        "requiresAbi",
+        "artifacts"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-        "platform": { "type": "string", "minLength": 1 },
-        "label": { "type": "string", "minLength": 1 },
-        "kind": { "enum": ["homebrew", "emulator"] },
-        "requiresAbi": { "$ref": "#/$defs/requiresAbi" },
-        "artifacts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/artifact" } },
-        "uses": { "type": "array", "items": { "$ref": "#/$defs/uses" } }
-      }
-    },
-
-    "artifact": {
-      "type": "object",
-      "required": ["filename", "role", "format", "bytes", "sha256", "url"],
-      "additionalProperties": false,
-      "properties": {
-        "filename": { "$ref": "#/$defs/filename" },
-        "role": { "enum": ["binary", "data"] },
-        "format": { "enum": ["gwhb", "raw", "elf"] },
-        "bytes": { "type": "integer", "minimum": 0 },
-        "sha256": { "$ref": "#/$defs/sha256" },
-        "url": { "$ref": "#/$defs/filename" }
-      }
-    },
-
-    "uses": {
-      "type": "object",
-      "required": ["tool", "outputs", "required"],
-      "additionalProperties": false,
-      "properties": {
-        "tool": { "type": "string", "minLength": 1 },
-        "outputs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-        "required": { "type": "boolean" }
-      }
-    },
-
-    "tool": {
-      "type": "object",
-      "required": ["id", "processor", "title", "binary", "limits", "inputs", "outputs"],
-      "additionalProperties": false,
-      "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-        "processor": {
-          "type": "object",
-          "required": ["type", "version"],
-          "additionalProperties": false,
-          "properties": {
-            "type": { "enum": ["wasm"] },
-            "version": { "type": "integer", "minimum": 1 }
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "homebrew",
+            "emulator"
+          ]
+        },
+        "requiresAbi": {
+          "$ref": "#/$defs/requiresAbi"
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "$ref": "#/$defs/artifact"
           }
         },
-        "title": { "$ref": "#/$defs/localised" },
-        "binary": {
+        "uses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/uses"
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "filename",
+        "role",
+        "format",
+        "bytes",
+        "sha256",
+        "url"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "filename": {
+          "$ref": "#/$defs/filename"
+        },
+        "role": {
+          "enum": [
+            "binary",
+            "data"
+          ]
+        },
+        "format": {
+          "enum": [
+            "gwhb",
+            "raw",
+            "elf"
+          ]
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "url": {
+          "$ref": "#/$defs/filename"
+        }
+      }
+    },
+    "uses": {
+      "type": "object",
+      "required": [
+        "tool",
+        "outputs",
+        "required"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "required": [
+        "id",
+        "processor",
+        "title",
+        "binary",
+        "limits",
+        "inputs",
+        "outputs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "processor": {
           "type": "object",
-          "required": ["file", "url", "bytes", "sha256"],
+          "required": [
+            "type",
+            "version"
+          ],
           "additionalProperties": false,
           "properties": {
-            "file": { "$ref": "#/$defs/filename" },
-            "url": { "$ref": "#/$defs/filename" },
-            "bytes": { "type": "integer", "minimum": 1 },
-            "sha256": { "$ref": "#/$defs/sha256" }
+            "type": {
+              "enum": [
+                "wasm"
+              ]
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "title": {
+          "$ref": "#/$defs/localised"
+        },
+        "binary": {
+          "type": "object",
+          "required": [
+            "file",
+            "url",
+            "bytes",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/filename"
+            },
+            "url": {
+              "$ref": "#/$defs/filename"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
           }
         },
         "limits": {
           "type": "object",
-          "required": ["maxMemoryPages", "maxOutputBytes"],
+          "required": [
+            "maxMemoryPages",
+            "maxOutputBytes"
+          ],
           "additionalProperties": false,
           "properties": {
-            "maxMemoryPages": { "type": "integer", "minimum": 1 },
-            "maxOutputBytes": { "type": "integer", "minimum": 1 }
+            "maxMemoryPages": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxOutputBytes": {
+              "type": "integer",
+              "minimum": 1
+            }
           }
         },
-        "options": { "type": "array", "items": { "$ref": "#/$defs/option" } },
-        "inputs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/input" } },
-        "outputs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/output" } }
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/option"
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/input"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/output"
+          }
+        }
       }
     },
-
     "option": {
       "type": "object",
-      "required": ["id", "bit", "default", "label"],
+      "required": [
+        "id",
+        "bit",
+        "default",
+        "label"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "bit": { "type": "integer", "minimum": 0, "maximum": 31 },
-        "default": { "type": "boolean" },
-        "label": { "$ref": "#/$defs/localised" }
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31
+        },
+        "default": {
+          "type": "boolean"
+        },
+        "label": {
+          "$ref": "#/$defs/localised"
+        }
       }
     },
-
     "input": {
       "type": "object",
-      "required": ["id", "required", "repeatable", "extensions", "maxBytes"],
+      "required": [
+        "id",
+        "required",
+        "repeatable",
+        "extensions",
+        "maxBytes"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-        "required": { "type": "boolean" },
-        "repeatable": { "type": "boolean" },
-        "label": { "$ref": "#/$defs/localised" },
-        "extensions": { "type": "array", "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" } },
-        "maxBytes": { "type": "integer", "minimum": 1 },
-        "acceptsModified": { "type": "boolean" },
-        "variants": { "type": "array", "items": { "$ref": "#/$defs/variant" } }
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "repeatable": {
+          "type": "boolean"
+        },
+        "label": {
+          "$ref": "#/$defs/localised"
+        },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\.[A-Za-z0-9]+$"
+          }
+        },
+        "maxBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "acceptsModified": {
+          "type": "boolean"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variant"
+          }
+        }
       }
     },
-
     "variant": {
       "type": "object",
-      "required": ["id", "sha1"],
+      "required": [
+        "id",
+        "sha1"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "label": { "$ref": "#/$defs/localised" },
-        "sha1": { "type": "string", "pattern": "^[0-9a-fA-F]{40}$" },
-        "bytes": { "type": "integer", "minimum": 1 }
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "$ref": "#/$defs/localised"
+        },
+        "sha1": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{40}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
-
     "output": {
       "type": "object",
-      "required": ["id", "filename", "role", "maxBytes"],
+      "required": [
+        "id",
+        "filename",
+        "role",
+        "maxBytes"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-        "filename": { "$ref": "#/$defs/filename" },
-        "role": { "enum": ["binary", "data"] },
-        "maxBytes": { "type": "integer", "minimum": 1 }
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "filename": {
+          "$ref": "#/$defs/filename"
+        },
+        "role": {
+          "enum": [
+            "binary",
+            "data"
+          ]
+        },
+        "maxBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     }
   }
