@@ -50,6 +50,7 @@ each to render a picker without fetching anything else.
 | `kind` | yes | `homebrew` or `emulator` |
 | `requiresAbi` | yes | Firmware ABI this build needs |
 | `needsUserFiles` | yes | True if the user must supply a ROM |
+| `bundle` | no | Filename of an [offline bundle](06-bundle.md) for this version |
 
 `requiresAbi.version` and `requiresAbi.minSize` are read out of the packed
 binary at build time — `pack_homebrew.py` and `pack_core.py` print both. Never

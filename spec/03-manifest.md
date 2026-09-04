@@ -182,7 +182,7 @@ installed alongside it.
 | `format` | yes | `gwhb`, `raw`, or `elf` |
 | `bytes` | yes | Size |
 | `sha256` | yes | Of the file |
-| `url` | yes | Relative to this manifest |
+| `url` | yes | A plain filename, resolved beside this manifest |
 
 ### `uses`
 
@@ -258,3 +258,12 @@ Localised: `tools[].title`, `tools[].inputs[].label`,
 `tools[].options[].label`.
 
 Not localised: platform labels, filenames, ids.
+
+## URLs
+
+Every `url` is a plain filename — no scheme, no host, no path separators, no
+`..`. It resolves beside the manifest that named it.
+
+This is what lets the same manifest work unchanged from a website and from
+[an offline bundle](06-bundle.md), and it stops a manifest sending an installer
+to another origin.

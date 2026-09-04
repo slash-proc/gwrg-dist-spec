@@ -16,6 +16,7 @@ an SD card. No coordination with the tool's authors is required.
 | [`versions.json`](spec/02-versions.md) | The index. One fetch, all versions |
 | [`manifest.json`](spec/03-manifest.md) | One version: its files and its converter |
 | [Processor ABI](spec/04-processor.md) | How a converter is called |
+| [Offline bundles](spec/06-bundle.md) | Installing without a network |
 
 Tool authors also read [host requirements](spec/05-host.md), which are
 mandatory, not advisory.

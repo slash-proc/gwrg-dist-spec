@@ -69,7 +69,7 @@
         "format": { "enum": ["gwhb", "raw", "elf"] },
         "bytes": { "type": "integer", "minimum": 0 },
         "sha256": { "$ref": "#/$defs/sha256" },
-        "url": { "type": "string", "minLength": 1 }
+        "url": { "$ref": "#/$defs/filename" }
       }
     },
 
@@ -106,7 +106,7 @@
           "additionalProperties": false,
           "properties": {
             "file": { "$ref": "#/$defs/filename" },
-            "url": { "type": "string", "minLength": 1 },
+            "url": { "$ref": "#/$defs/filename" },
             "bytes": { "type": "integer", "minimum": 1 },
             "sha256": { "$ref": "#/$defs/sha256" }
           }

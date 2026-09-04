@@ -196,6 +196,22 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     out.targets.push({ ...target, installed });
   }
 
+  // An offline bundle is optional, but a broken link to one is still a defect.
+  if (entry.bundle) {
+    const bundleUrl = new URL(entry.bundle, base).href;
+    try {
+      const h = await head(bundleUrl);
+      say(h.ok ? OK : ERROR,
+        h.ok ? `${tag}: offline bundle is available` : `${tag}: offline bundle is not reachable`,
+        h.ok ? `${entry.bundle}${h.bytes ? ` — ${h.bytes} bytes` : ""}` : `${bundleUrl} — HTTP ${h.status}`);
+    } catch (e) {
+      say(ERROR, `${tag}: offline bundle could not be fetched`, `${bundleUrl} — ${e.message}`);
+    }
+  } else {
+    say(WARN, `${tag}: no offline bundle`,
+      "A bundle lets the release be installed if this project disappears");
+  }
+
   const files = [];
   for (const target of manifest.targets) {
     for (const a of target.artifacts) files.push({ what: `${target.id}/${a.filename}`, ...a });

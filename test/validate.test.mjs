@@ -90,6 +90,14 @@ full.targets[0].artifacts.push({
 full.targets[0].uses = [{ tool: "zelda3-assets", outputs: ["assets"], required: true }];
 
 expect("versions.json", validate(versions, versionsSchema), true);
+
+const withBundle = structuredClone(versions);
+withBundle.versions[0].bundle = "minesweeper-v0.1.2.zip";
+expect("versions.json with a bundle", validate(withBundle, versionsSchema), true);
+
+const badBundle = structuredClone(versions);
+badBundle.versions[0].bundle = "../evil.zip";
+expect("rejects a traversing bundle name", validate(badBundle, versionsSchema), false);
 expect("manifest without a converter", validate(minimal, manifestSchema), true);
 expect("manifest with a converter", validate(full, manifestSchema), true);
 
@@ -107,6 +115,14 @@ bad("rejects a short sha256", (d) => { d.targets[0].artifacts[0].sha256 = "abc";
 bad("rejects a missing tools key", (d) => { delete d.tools; });
 bad("rejects a future schemaVersion", (d) => { d.schemaVersion = 2; });
 bad("rejects a localised platform label", (d) => { d.targets[0].label = { en: "G&W" }; });
+bad("rejects an absolute url", (d) => { d.targets[0].artifacts[0].url = "https://evil.example/x.bin"; });
+bad("rejects a traversing url", (d) => { d.targets[0].artifacts[0].url = "../../x.bin"; });
+bad("rejects a rooted url", (d) => { d.targets[0].artifacts[0].url = "/x.bin"; });
+bad("rejects a subdirectory url", (d) => { d.targets[0].artifacts[0].url = "files/x.bin"; });
+
+const toolUrl = structuredClone(full);
+toolUrl.tools[0].binary.url = "https://evil.example/extractor.wasm";
+expect("rejects an absolute tool binary url", validate(toolUrl, manifestSchema), false);
 
 const noEn = structuredClone(full);
 noEn.tools[0].title = { de: "Nur Deutsch" };
