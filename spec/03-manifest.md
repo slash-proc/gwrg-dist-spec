@@ -40,12 +40,12 @@ Every file in an install comes from one of two places:
       "requiresAbi": { "version": 2, "minSize": 824 },
       "artifacts": [
         {
-          "filename": "MineSweeper.bin",
+          "filename": "minesweeper.bin",
           "role": "binary",
           "format": "gwhb",
           "bytes": 51328,
           "sha256": "9f2c1d…",
-          "url": "MineSweeper.bin"
+          "url": "minesweeper.bin"
         }
       ]
     }

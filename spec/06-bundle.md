@@ -11,16 +11,20 @@ outlives the repository that published it.
 rewritten.
 
 ```
-minesweeper-v0.1.2.zip
+minesweeper-v0.1.2-bundle.zip
 ├── manifest.json
-└── MineSweeper.bin
+└── minesweeper.bin
 ```
 
 Every `url` in a manifest is a plain relative filename, so the same resolution
 works against zip entries as against a URL. A tool needs one new resolver, not
 a second format.
 
-Name it `<project>-<tag>.zip`.
+Name it `<project>-<tag>-bundle.zip`, all lower case.
+
+`-bundle` keeps it distinct from any other archive a project attaches to the
+same release. GitHub compares release asset names case-insensitively, so two
+that differ only in case cannot both be attached.
 
 ## Multi-version bundles
 
@@ -28,14 +32,14 @@ An archivist may package a project's whole retained history. Put `versions.json`
 at the zip root and one directory per tag, exactly as the site is laid out:
 
 ```
-minesweeper-bundle.zip
+minesweeper-all-bundle.zip
 ├── versions.json
 ├── v0.1.2/
 │   ├── manifest.json
-│   └── MineSweeper.bin
+│   └── minesweeper.bin
 └── v0.1.1/
     ├── manifest.json
-    └── MineSweeper.bin
+    └── minesweeper.bin
 ```
 
 A tool reads `versions.json` when present and falls back to a lone

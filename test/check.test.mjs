@@ -82,14 +82,14 @@ expect("conformant fixture passes", r.summary.conformant, errorsOf(r).join(" | "
 expect("reports the target", r.versions[0].targets[0].id === "gnw-retro-go");
 
 // A declared bundle that is not published.
-set(index({ versions: [{ ...index().versions[0], bundle: "minesweeper-v0.1.2.zip" }] }), manifest());
+set(index({ versions: [{ ...index().versions[0], bundle: "minesweeper-v0.1.2-bundle.zip" }] }), manifest());
 r = await check("owner/repo", opts);
 expect("catches a missing bundle",
   errorsOf(r).some((e) => e.includes("bundle")), errorsOf(r).join(" | "));
 
 // A published bundle passes and is not warned about.
-set(index({ versions: [{ ...index().versions[0], bundle: "minesweeper-v0.1.2.zip" }] }), manifest(),
-    { "/dist/minesweeper-v0.1.2.zip": Buffer.from("PK\x05\x06" + "\0".repeat(18)) });
+set(index({ versions: [{ ...index().versions[0], bundle: "minesweeper-v0.1.2-bundle.zip" }] }), manifest(),
+    { "/dist/minesweeper-v0.1.2-bundle.zip": Buffer.from("PK\x05\x06" + "\0".repeat(18)) });
 r = await check("owner/repo", opts);
 expect("accepts a published bundle", r.summary.conformant, errorsOf(r).join(" | "));
 expect("does not warn when a bundle exists",

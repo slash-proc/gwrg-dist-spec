@@ -92,12 +92,20 @@ full.targets[0].uses = [{ tool: "zelda3-assets", outputs: ["assets"], required: 
 expect("versions.json", validate(versions, versionsSchema), true);
 
 const withBundle = structuredClone(versions);
-withBundle.versions[0].bundle = "minesweeper-v0.1.2.zip";
+withBundle.versions[0].bundle = "minesweeper-v0.1.2-bundle.zip";
 expect("versions.json with a bundle", validate(withBundle, versionsSchema), true);
 
 const badBundle = structuredClone(versions);
-badBundle.versions[0].bundle = "../evil.zip";
+badBundle.versions[0].bundle = "../evil-bundle.zip";
 expect("rejects a traversing bundle name", validate(badBundle, versionsSchema), false);
+
+const wrongSuffix = structuredClone(versions);
+wrongSuffix.versions[0].bundle = "minesweeper-v0.1.2.zip";
+expect("rejects a bundle without the -bundle suffix", validate(wrongSuffix, versionsSchema), false);
+
+const upperBundle = structuredClone(versions);
+upperBundle.versions[0].bundle = "MineSweeper-v0.1.2-bundle.zip";
+expect("rejects an upper-case bundle name", validate(upperBundle, versionsSchema), false);
 expect("manifest without a converter", validate(minimal, manifestSchema), true);
 expect("manifest with a converter", validate(full, manifestSchema), true);
 
