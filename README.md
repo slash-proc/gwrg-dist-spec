@@ -34,10 +34,6 @@ dist/v1.0.0/game.bin
 That is a complete implementation. Converters are only needed when the user
 must supply their own ROM.
 
-A project may also publish the opposite: a converter and no binary at all, when
-the files it produces are installed by something else. See
-[converter-only distributions](spec/03-manifest.md#converter-only-distributions).
-
 ## Conformance checker
 
 <https://slash-proc.github.io/gwrg-dist-spec/> takes a repository URL and reports

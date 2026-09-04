@@ -75,8 +75,7 @@ function renderVersion(v) {
 
   const meta = el("p", "muted",
     `${m.tools.length ? "needs a user-supplied file" : "no conversion needed"} · ` +
-    `${m.targets.length ? `${m.targets.length} target${m.targets.length === 1 ? "" : "s"}`
-                        : "converter only, no target"} · ` +
+    `${m.targets.length} target${m.targets.length === 1 ? "" : "s"} · ` +
     `commit ${m.source.commit.slice(0, 10)}`);
   sec.append(meta);
 

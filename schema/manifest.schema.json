@@ -20,7 +20,7 @@
       }
     },
     "tools": { "type": "array", "items": { "$ref": "#/$defs/tool" } },
-    "targets": { "type": "array", "items": { "$ref": "#/$defs/target" } }
+    "targets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/target" } }
   },
   "$defs": {
     "localised": {

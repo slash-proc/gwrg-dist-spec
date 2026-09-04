@@ -152,48 +152,21 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
       `index says "${index.project}", manifest says "${manifest.project}"`);
   }
 
-  // A version with no targets publishes a converter and nothing else. The
-  // files it produces are installed by something else, so there is no device
-  // binary here, and nothing for requiresAbi to describe.
-  const converterOnly = manifest.targets.length === 0;
-  if (converterOnly && manifest.tools.length === 0) {
-    say(ERROR, `${tag}: manifest declares neither a target nor a tool`,
-      "There is nothing to install and nothing to run");
-  } else if (converterOnly) {
-    say(INFO, `${tag}: converter only`,
-      `${manifest.tools.length} tool(s), no target — the files it produces are installed by ` +
-        "another project");
-  }
-
   // The index duplicates these so a picker need not fetch manifests. They must agree.
   const kinds = new Set(manifest.targets.map((t) => t.kind));
-  if (converterOnly) {
-    if (entry.kind !== undefined && entry.kind !== "converter") {
-      say(ERROR, `${tag}: index kind is not "converter"`,
-        `index says "${entry.kind}", but the manifest declares no target`);
-    }
-    if (entry.requiresAbi !== undefined) {
-      say(ERROR, `${tag}: requiresAbi on a version with no device binary`,
-        "Omit it: there is no binary whose firmware ABI it could describe");
-    }
-  } else {
-    if (entry.kind && !kinds.has(entry.kind)) {
-      say(ERROR, `${tag}: index kind is not offered by any target`,
-        `index says "${entry.kind}", targets offer ${[...kinds].join(", ")}`);
-    }
-    const abis = manifest.targets.map((t) => `${t.requiresAbi.version}/${t.requiresAbi.minSize}`);
-    if (entry.requiresAbi === undefined) {
-      say(ERROR, `${tag}: index omits requiresAbi`,
-        `targets need ${abis.join(", ")}`);
-    } else if (!abis.includes(`${entry.requiresAbi.version}/${entry.requiresAbi.minSize}`)) {
-      say(ERROR, `${tag}: requiresAbi disagrees with every target`,
-        `index says ${entry.requiresAbi.version}/${entry.requiresAbi.minSize}, targets need ${abis.join(", ")}`);
-    }
+  if (entry.kind && !kinds.has(entry.kind)) {
+    say(ERROR, `${tag}: index kind is not offered by any target`,
+      `index says "${entry.kind}", targets offer ${[...kinds].join(", ")}`);
   }
   const needsFiles = manifest.tools.some((t) => t.inputs.some((i) => i.required));
   if (entry.needsUserFiles !== undefined && entry.needsUserFiles !== needsFiles) {
     say(ERROR, `${tag}: needsUserFiles disagrees with the manifest`,
       `index says ${entry.needsUserFiles}, manifest implies ${needsFiles}`);
+  }
+  const abis = manifest.targets.map((t) => `${t.requiresAbi.version}/${t.requiresAbi.minSize}`);
+  if (entry.requiresAbi && !abis.includes(`${entry.requiresAbi.version}/${entry.requiresAbi.minSize}`)) {
+    say(ERROR, `${tag}: requiresAbi disagrees with every target`,
+      `index says ${entry.requiresAbi.version}/${entry.requiresAbi.minSize}, targets need ${abis.join(", ")}`);
   }
 
   const toolIds = new Set(manifest.tools.map((t) => t.id));
