@@ -21,7 +21,7 @@ const manifest = (over = {}) => ({
     label: "Game & Watch (Retro-Go SD)", kind: "homebrew",
     requiresAbi: { version: 2, minSize: 824 },
     artifacts: [{
-      filename: "MineSweeper.bin", role: "binary", format: "gwhb",
+      filename: "MineSweeper.bin",
       bytes: 0, sha256: HASH_EMPTY, url: "MineSweeper.bin",
     }],
   }],
@@ -109,20 +109,9 @@ r = await check("owner/repo", opts);
 expect("catches needsUserFiles disagreement",
   errorsOf(r).some((e) => e.includes("needsUserFiles")), errorsOf(r).join(" | "));
 
-// Two artifacts claiming role "binary".
-const twoBinaries = manifest();
-twoBinaries.targets[0].artifacts.push({
-  filename: "other.bin", role: "binary", format: "gwhb",
-  bytes: 0, sha256: HASH_EMPTY, url: "MineSweeper.bin",
-});
-set(index(), twoBinaries);
-r = await check("owner/repo", opts);
-expect("catches two binaries in one target",
-  errorsOf(r).some((e) => e.includes("exactly one binary")), errorsOf(r).join(" | "));
-
-// A binary the converter produces counts, so the target ships no artifacts.
-// This is the patcher shape: the user's ROM goes in, a runnable binary
-// comes out, and the project publishes nothing but the converter.
+// A converter can produce the whole install set, so the target ships no
+// artifacts. This is the patcher shape: the user's ROM goes in, a runnable
+// binary comes out, and the project publishes nothing but the converter.
 const produced = manifest();
 produced.tools = [{
   id: "patcher",
@@ -134,14 +123,14 @@ produced.tools = [{
     id: "rom", required: true, repeatable: false,
     label: { en: "ROM" }, extensions: [".bin"], maxBytes: 1048576,
   }],
-  outputs: [{ id: "bin", filename: "minesweeper.bin", role: "binary", maxBytes: 1048576 }],
+  outputs: [{ id: "bin", filename: "minesweeper.bin", maxBytes: 1048576 }],
 }];
 produced.targets[0].artifacts = [];
 produced.targets[0].uses = [{ tool: "patcher", outputs: ["bin"], required: true }];
 set(index({ versions: [{ ...index().versions[0], needsUserFiles: true }] }), produced,
   { "/dist/v0.1.2/patch.wasm": Buffer.alloc(1) });
 r = await check("owner/repo", opts);
-expect("a produced binary satisfies a target with no artifacts",
+expect("a produced file satisfies a target with no artifacts",
   r.summary.conformant, errorsOf(r).join(" | "));
 
 // ...but a target that installs nothing at all is still an error.

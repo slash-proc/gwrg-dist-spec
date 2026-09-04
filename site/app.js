@@ -90,8 +90,6 @@ function renderVersion(v) {
     for (const a of t.artifacts) {
       const li = el("li");
       li.append(el("code", null, a.filename));
-      li.append(el("span", "tag", a.role));
-      li.append(el("span", "tag", a.format));
       li.append(el("span", "muted", `${a.bytes.toLocaleString()} bytes`));
       files.append(li);
     }
@@ -102,7 +100,6 @@ function renderVersion(v) {
         if (!o) continue;
         const li = el("li");
         li.append(el("code", null, o.filename));
-        li.append(el("span", "tag", o.role));
         li.append(el("span", "tag derived", `from ${use.tool}`));
         if (!use.required) li.append(el("span", "muted", "optional"));
         files.append(li);

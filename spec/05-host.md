@@ -46,9 +46,11 @@ mirror is not a trust boundary.
 
 **A produced binary is checked differently.** A file a converter produces has
 no published hash, because it is derived from what the user supplied and no two
-users need get the same bytes. Check its header instead: read the firmware ABI
-version and minimum size out of the binary itself and compare those against the
-device, rather than trusting the target's advisory `requiresAbi`.
+users need get the same bytes. Identify the binary the way the firmware does —
+by its `.bin` extension, since that is what the launcher scans for — and check
+its header instead: read the firmware ABI version and minimum size out of the
+file itself and compare those against the device, rather than trusting the
+target's advisory `requiresAbi`.
 
 ## Recommended
 

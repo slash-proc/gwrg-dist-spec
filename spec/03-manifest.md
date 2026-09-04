@@ -18,13 +18,13 @@ Every file in an install comes from one of two places:
 **The install set is every artifact, plus the declared outputs of every tool in
 `uses[]`.** There is no separate list. Nothing to keep in sync.
 
-A target installs **exactly one binary**, and it may arrive from either half.
-Usually the project ships it as an artifact with `role: "binary"`. It may
-instead be produced, as a tool output with `role: "binary"` — a converter that
-takes the user's ROM and emits a ready-to-run binary rather than a data file.
-A target whose whole install set is produced therefore has an empty
-`artifacts`, which is why the array is required but may be empty. What a target
-may not do is install nothing at all.
+The file the launcher starts is the one named `.bin`; the firmware finds it by
+scanning for that extension, so the manifest does not label it. It may arrive
+from either half: usually the project ships it as an artifact, but it may
+instead be produced — a converter that takes the user's ROM and emits a
+ready-to-run binary rather than a data file. A target whose whole install set
+is produced therefore has an empty `artifacts`, which is why the array is
+required but may be empty. What a target may not do is install nothing at all.
 
 When the binary is produced, `requiresAbi` cannot be read from bytes at publish
 time, because the bytes do not exist yet. Treat it as advisory: use it to filter
@@ -54,8 +54,6 @@ itself, whose header carries it.
       "artifacts": [
         {
           "filename": "minesweeper.bin",
-          "role": "binary",
-          "format": "gwhb",
           "bytes": 51328,
           "sha256": "9f2c1d…",
           "url": "minesweeper.bin"
@@ -121,7 +119,7 @@ absent key is indistinguishable from a truncated file.
         }
       ],
       "outputs": [
-        { "id": "assets", "filename": "zelda3_assets.dat", "role": "data",
+        { "id": "assets", "filename": "zelda3_assets.dat",
           "maxBytes": 4194304 }
       ]
     }
@@ -135,9 +133,9 @@ absent key is indistinguishable from a truncated file.
       "kind": "homebrew",
       "requiresAbi": { "version": 2, "minSize": 824 },
       "artifacts": [
-        { "filename": "zelda3.bin", "role": "binary", "format": "gwhb",
+        { "filename": "zelda3.bin",
           "bytes": 262144, "sha256": "…", "url": "zelda3.bin" },
-        { "filename": "zelda3.ro", "role": "data", "format": "raw",
+        { "filename": "zelda3.ro",
           "bytes": 1048576, "sha256": "…", "url": "zelda3.ro" }
       ],
       "uses": [
@@ -180,19 +178,16 @@ A project says only:
 
 - `kind` — whether this is a homebrew or an emulator core. The installer maps
   that to a directory.
-- `role` — `binary` for the file the launcher starts, `data` for everything
-  that must sit beside it.
 
-Exactly one artifact per target has `role: "binary"`. `data` files are
-installed alongside it.
+Within that directory the firmware picks out the file the launcher starts by
+its `.bin` extension. Everything else in the install set is installed
+alongside it.
 
 ### Artifacts
 
 | Field | Required | |
 |---|---|---|
 | `filename` | yes | Name on the card. No path separators |
-| `role` | yes | `binary` or `data` |
-| `format` | yes | `gwhb`, `raw`, or `elf` |
 | `bytes` | yes | Size |
 | `sha256` | yes | Of the file |
 | `url` | yes | A plain filename, resolved beside this manifest |
@@ -255,7 +250,6 @@ the module learns what it was given.
 |---|---|---|
 | `id` | yes | Referenced by `uses[].outputs` |
 | `filename` | yes | Name on the card |
-| `role` | yes | `binary` or `data` |
 | `maxBytes` | yes | Ceiling |
 
 A module names its own outputs at runtime. Those names are checked against this

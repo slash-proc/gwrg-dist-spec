@@ -175,10 +175,9 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   for (const target of manifest.targets) {
     // A target's install set is its artifacts plus the outputs of the tools it
     // uses. Which half a file arrives from is a distribution detail: a project
-    // may ship its binary, or a converter may produce it from something the
-    // user supplies. Both are one binary landing on the card, so both rules
-    // below count the whole set rather than the shipped half.
-    let binaries = target.artifacts.filter((a) => a.role === "binary").length;
+    // may ship its files, or a converter may produce them from something the
+    // user supplies. The rule below counts the whole set rather than the
+    // shipped half.
     const installed = target.artifacts.map((a) => a.filename);
 
     for (const use of target.uses ?? []) {
@@ -193,15 +192,10 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
           say(ERROR, `${tag}/${target.id}: tool "${use.tool}" has no output "${id}"`, "");
         } else {
           installed.push(output.filename);
-          if (output.role === "binary") binaries++;
         }
       }
     }
 
-    if (binaries !== 1) {
-      say(ERROR, `${tag}/${target.id}: needs exactly one binary, shipped or produced`,
-        `found ${binaries}`);
-    }
     if (installed.length === 0) {
       say(ERROR, `${tag}/${target.id}: installs nothing`,
         "a target needs at least one artifact or one used tool output");

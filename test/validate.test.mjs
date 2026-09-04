@@ -53,7 +53,7 @@ const minimal = {
     kind: "homebrew",
     requiresAbi: { version: 2, minSize: 824 },
     artifacts: [{
-      filename: "MineSweeper.bin", role: "binary", format: "gwhb",
+      filename: "MineSweeper.bin",
       bytes: 51328, sha256: HASH, url: "MineSweeper.bin",
     }],
   }],
@@ -81,10 +81,10 @@ full.tools = [{
       variants: [{ id: "de", sha1: "2E62494967FB0AFDF5DA1635607F9641DF7C6559" }],
     },
   ],
-  outputs: [{ id: "assets", filename: "zelda3_assets.dat", role: "data", maxBytes: 4194304 }],
+  outputs: [{ id: "assets", filename: "zelda3_assets.dat", maxBytes: 4194304 }],
 }];
 full.targets[0].artifacts.push({
-  filename: "zelda3.ro", role: "data", format: "raw",
+  filename: "zelda3.ro",
   bytes: 1048576, sha256: HASH, url: "zelda3.ro",
 });
 full.targets[0].uses = [{ tool: "zelda3-assets", outputs: ["assets"], required: true }];
@@ -116,7 +116,7 @@ const bad = (name, mutate) => {
 };
 
 bad("rejects an unknown kind", (d) => { d.targets[0].kind = "game"; });
-bad("rejects an unknown role", (d) => { d.targets[0].artifacts[0].role = "primary"; });
+bad("rejects a role field", (d) => { d.targets[0].artifacts[0].role = "binary"; });
 bad("rejects a destination field", (d) => { d.targets[0].artifacts[0].destination = "/homebrews/"; });
 bad("rejects a path in a filename", (d) => { d.targets[0].artifacts[0].filename = "../evil.bin"; });
 bad("rejects a short sha256", (d) => { d.targets[0].artifacts[0].sha256 = "abc"; });

@@ -61,12 +61,10 @@
 
     "artifact": {
       "type": "object",
-      "required": ["filename", "role", "format", "bytes", "sha256", "url"],
+      "required": ["filename", "bytes", "sha256", "url"],
       "additionalProperties": false,
       "properties": {
         "filename": { "$ref": "#/$defs/filename" },
-        "role": { "enum": ["binary", "data"] },
-        "format": { "enum": ["gwhb", "raw", "elf"] },
         "bytes": { "type": "integer", "minimum": 0 },
         "sha256": { "$ref": "#/$defs/sha256" },
         "url": { "$ref": "#/$defs/filename" }
@@ -168,12 +166,11 @@
 
     "output": {
       "type": "object",
-      "required": ["id", "filename", "role", "maxBytes"],
+      "required": ["id", "filename", "maxBytes"],
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "filename": { "$ref": "#/$defs/filename" },
-        "role": { "enum": ["binary", "data"] },
         "maxBytes": { "type": "integer", "minimum": 1 }
       }
     }
