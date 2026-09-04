@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GWRG spec conformance</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>GWRG spec conformance</h1>
+  <p>Point this at a repository. It reads the project's <code>dist/</code> site and reports
+     what it publishes and whether it conforms.</p>
+</header>
+
+<main>
+  <form id="form">
+    <label for="repo">Repository</label>
+    <div class="row">
+      <input id="repo" name="repo" type="text" spellcheck="false"
+             placeholder="https://github.com/owner/repo" autocomplete="off">
+      <button type="submit">Check</button>
+    </div>
+    <label class="check"><input type="checkbox" id="hash"> Download every file and verify its hash (slow)</label>
+  </form>
+
+  <section id="result" hidden></section>
+</main>
+
+<footer>
+  <a href="https://github.com/slash-proc/gwrg-dist-spec">Spec</a> ·
+  <a href="spec/03-manifest.md">manifest.json</a> ·
+  <a href="spec/04-processor.md">Processor ABI</a>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

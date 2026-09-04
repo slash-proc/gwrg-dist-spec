@@ -33,6 +33,29 @@ dist/v1.0.0/game.bin
 That is a complete implementation. Converters are only needed when the user
 must supply their own ROM.
 
+## Conformance checker
+
+<https://slash-proc.github.io/gwrg-dist-spec/> takes a repository URL and reports
+what the project publishes and whether it conforms.
+
+It is a static page. It fetches the project's `dist/` tree from the browser, so
+it exercises exactly the path a real installer takes — a project that passes
+there is readable by any web tool.
+
+```
+site/validate.js   JSON Schema validator, no dependencies
+site/check.js      the checks themselves; runs in a browser and under node
+test/              schema fixtures and an end-to-end run against a local tree
+```
+
+Both files are meant to be copied. `check(repo, { base, schemaBase })` runs
+outside a browser, so a project can gate its own release on conformance:
+
+```bash
+node test/validate.test.mjs
+node test/check.test.mjs
+```
+
 ## Versioning
 
 `schemaVersion` appears at the top of `versions.json` and `manifest.json`. It
