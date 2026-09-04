@@ -2,6 +2,7 @@
 // against it, including the failure cases. Run: node test/check.test.mjs
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { check } from "../site/check.js";
 
 const HASH_EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
@@ -124,6 +125,33 @@ set(index(), missing);
 r = await check("owner/repo", opts);
 expect("catches an unreachable artifact",
   errorsOf(r).some((e) => e.includes("not reachable")), errorsOf(r).join(" | "));
+
+// A gzipped response reports the compressed length; that is not a size mismatch.
+{
+  const gz = createServer((req, res) => {
+    const path = req.url.split("?")[0];
+    if (path.startsWith("/schema/")) {
+      res.writeHead(200, { "content-type": "application/json" });
+      return res.end(readFileSync(new URL(path.slice("/schema/".length), schemaDir)));
+    }
+    const b = files[path];
+    if (b === undefined) { res.writeHead(404); return res.end("no"); }
+    // Serve gzipped, as GitHub Pages does: content-length is then the
+    // compressed length, which is not the file's size.
+    const z = gzipSync(b);
+    res.writeHead(200, { "content-encoding": "gzip", "content-length": String(z.length) });
+    res.end(req.method === "HEAD" ? undefined : z);
+  });
+  await new Promise((r) => gz.listen(0, "127.0.0.1", r));
+  const p = gz.address().port;
+  set(index(), manifest());
+  const rz = await check("owner/repo", {
+    base: `http://127.0.0.1:${p}/dist/`, schemaBase: `http://127.0.0.1:${p}/schema/`,
+  });
+  expect("ignores content-length on a compressed response", rz.summary.conformant,
+    errorsOf(rz).join(" | "));
+  gz.close();
+}
 
 // Declared size does not match what is served.
 const wrongSize = manifest();

@@ -31,7 +31,17 @@ async function getJson(url) {
 async function head(url) {
   const res = await fetch(url, { method: "HEAD", cache: "no-store" });
   const len = res.headers.get("content-length");
-  return { ok: res.ok, status: res.status, bytes: len === null ? null : Number(len) };
+  // A compressed response reports the compressed length, which says nothing
+  // about the file's real size. GitHub Pages gzips by default, so treating
+  // content-length as the size fails every artifact it serves.
+  const encoding = res.headers.get("content-encoding");
+  const encoded = encoding !== null && encoding !== "identity";
+  return {
+    ok: res.ok,
+    status: res.status,
+    bytes: len === null || encoded ? null : Number(len),
+    encoded,
+  };
 }
 
 async function sha256(bytes) {
@@ -239,7 +249,15 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
         continue;
       }
       const res = await fetch(fileUrl, { cache: "no-store" });
-      const got = await sha256(await res.arrayBuffer());
+      const body = await res.arrayBuffer();
+      // fetch decompresses, so this is the real size even when HEAD could not
+      // tell us one.
+      if (f.bytes !== undefined && body.byteLength !== f.bytes) {
+        say(ERROR, `${tag}: ${f.what} is not the declared size`,
+          `declared ${f.bytes}, downloaded ${body.byteLength}`);
+        continue;
+      }
+      const got = await sha256(body);
       if (got !== f.sha256) {
         say(ERROR, `${tag}: ${f.what} does not match its sha256`, `served ${got.slice(0, 16)}…`);
       } else {
