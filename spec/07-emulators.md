@@ -203,6 +203,9 @@ refusal.
 
 ## Worked example
 
+Hashes and the commit are elided as `…`, the convention
+[`03-manifest.md`](03-manifest.md) describes.
+
 ```json
 {
   "schemaVersion": 1,

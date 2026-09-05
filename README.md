@@ -35,6 +35,10 @@ dist/v1.0.0/game.bin
 That is a complete implementation. Converters are only needed when the user
 must supply their own ROM.
 
+An emulator core publishes the same three, and its manifest adds `systems[]` —
+the launcher tabs the binary provides, read out of the packed core rather than
+written by hand. See [emulator cores](spec/07-emulators.md).
+
 ## Conformance checker
 
 <https://slash-proc.github.io/gwrg-dist-spec/> takes a repository URL and reports
@@ -76,16 +80,26 @@ whole project over an old version.
 
 ## Status
 
-Draft. The spec is being written alongside its implementations. Four homebrew
-projects publish under it today; emulator cores are modelled
-([spec/07](spec/07-emulators.md)) but none has been ported yet.
+Draft. The spec is written alongside its implementations, and every field in it
+exists because a real project needed it.
+
+Four homebrew projects publish under it today, all conformant against the
+checker:
 
 | Project | Shape | State |
 |---|---|---|
-| [mine-sweeper-retro-go-sd](https://github.com/slash-proc/mine-sweeper-retro-go-sd) | no converter | published, conformant |
-| [snake-retro-go-sd](https://github.com/slash-proc/snake-retro-go-sd) | no converter | published, conformant |
-| [smw-retro-go-sd](https://github.com/slash-proc/smw-retro-go-sd) | one converter, one input | not yet released |
-| [zelda3-retro-go-sd](https://github.com/slash-proc/zelda3-retro-go-sd) | one converter, repeatable inputs | published, conformant |
-| the emulator cores | one binary, one to four systems | modelled, not yet ported |
+| [mine-sweeper-retro-go-sd](https://github.com/slash-proc/mine-sweeper-retro-go-sd) | no converter | published, v0.1.3 |
+| [snake-retro-go-sd](https://github.com/slash-proc/snake-retro-go-sd) | no converter | published, v1.0.1 |
+| [smw-retro-go-sd](https://github.com/slash-proc/smw-retro-go-sd) | one converter, one input | published, v0.3.0 |
+| [zelda3-retro-go-sd](https://github.com/slash-proc/zelda3-retro-go-sd) | one converter, repeatable inputs | published, v0.2.0 |
 
-Breaking changes are expected while the first cores are ported.
+Seven emulator cores are prepared and none has been released yet: pce-go, gba,
+gwenesis, lynx and snes were already ported and now emit manifests; blueMSX and
+tama have just been converted from the project template.
+
+Between them they exercise the shapes the emulator half was designed for — one
+binary serving four launcher tabs, a system whose game is a `.cue` and its
+tracks, a required BIOS, an optional one, and a required sidecar beside the
+core.
+
+Breaking changes are expected until the first cores ship.

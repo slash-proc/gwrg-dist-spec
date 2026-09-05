@@ -39,16 +39,20 @@ itself, whose header carries it.
 
 ## Minimal example — no converter
 
+This is a real published manifest, not an illustration. Fetch
+<https://slash-proc.github.io/mine-sweeper-retro-go-sd/dist/v0.1.3/manifest.json>
+and you get these bytes.
+
 ```json
 {
   "schemaVersion": 1,
   "project": "minesweeper",
-  "title": "Minesweeper",
+  "title": "Mine Sweeper",
   "docs": "https://github.com/slash-proc/mine-sweeper-retro-go-sd#readme",
   "source": {
     "repo": "slash-proc/mine-sweeper-retro-go-sd",
-    "commit": "daf6c0f4e2b1a09c3d5f7e8a1b2c3d4e5f6a7b8c",
-    "ref": "v0.1.2"
+    "commit": "61019df2b15b1665d6e878a7c891a2ec9250475a",
+    "ref": "v0.1.3"
   },
   "tools": [],
   "targets": [
@@ -61,8 +65,8 @@ itself, whose header carries it.
       "artifacts": [
         {
           "filename": "minesweeper.bin",
-          "bytes": 51328,
-          "sha256": "9f2c1d…",
+          "bytes": 34320,
+          "sha256": "e0dfe0b187824a772cebcd48941018d78fc4f013f6cfca69e8377910799136df",
           "url": "minesweeper.bin"
         }
       ]
@@ -74,6 +78,10 @@ itself, whose header carries it.
 `"tools": []` states that no conversion is needed. Write it explicitly. An
 absent key is indistinguishable from a truncated file.
 
+**The longer examples below elide hashes and commits as `…`.** They are
+readable rather than runnable; that one is both. A `…` never appears in a real
+manifest — every `sha256` is 64 hex characters and the schema enforces it.
+
 ## Full example — with a converter
 
 ```json
@@ -81,7 +89,7 @@ absent key is indistinguishable from a truncated file.
   "schemaVersion": 1,
   "project": "zelda3",
   "title": "The Legend of Zelda: A Link to the Past",
-  "source": { "repo": "slash-proc/zelda3", "commit": "9225af8…", "ref": "v1.0.0" },
+  "source": { "repo": "slash-proc/zelda3-retro-go-sd", "commit": "9225af8…", "ref": "v1.0.0" },
 
   "tools": [
     {
@@ -311,6 +319,26 @@ A module names its own outputs at runtime. Those names are checked against this
 list. The manifest decides what a legitimate run produces; the module does not
 get to name its own destination.
 
+## Rules the schema does not state
+
+JSON Schema describes the shape of one field at a time. These are relationships
+between fields, so [`site/check.js`](../site/check.js) enforces them instead —
+and a third-party tool validating with a full JSON Schema implementation will
+accept a document that breaks them.
+
+- **No two installed files share a name.** The install set lands in one
+  directory, so a collision means one file silently overwrites the other. The
+  set spans `artifacts[]` and the tool outputs a target uses, and the two halves
+  are written independently, which is exactly how a collision gets missed.
+- **A target installs something.** An empty `artifacts` is legal only when a
+  tool produces the binary.
+- **`uses[]` names a tool that exists, and outputs it declares.**
+- **Tool ids are unique**, since `uses[].tool` resolves by id.
+- **`project` matches `versions.json`.** The index and the manifest are
+  generated separately and must describe the same project.
+
+[Emulator cores](07-emulators.md) add a few more of their own.
+
 ## Localisation
 
 Localised fields are objects keyed by language code, with `en` always present.
@@ -319,7 +347,8 @@ A tool falls back to `en` for any locale it has no entry for.
 Localised: `tools[].title`, `tools[].inputs[].label`,
 `tools[].inputs[].description`, `tools[].inputs[].variants[].label`,
 `tools[].options[].label`, `tools[].outputs[].label`,
-`tools[].outputs[].description`.
+`tools[].outputs[].description`, and on an emulator core
+`targets[].systems[].bios[].label` and `.description`.
 
 A manifest carries this copy so that every installer says the same thing. An
 input is a file the user has to go and find, and "Translated ROM" does not tell
@@ -327,7 +356,9 @@ them why they would want one; the project knows and a generic installer does
 not. Leaving it out means each consumer invents its own wording, and the
 project cannot correct it without waiting for that consumer to ship.
 
-Not localised: platform labels, filenames, ids.
+Not localised: platform labels, filenames, ids, and a system's `longName` and
+`shortName` — console names differ by region rather than language, which
+[emulator cores](07-emulators.md) explains.
 
 ## URLs
 

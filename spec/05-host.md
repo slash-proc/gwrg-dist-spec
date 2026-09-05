@@ -54,11 +54,25 @@ it is handed. If a module refuses a file the host chose to allow, the two
 disagree about a decision that has only one right answer, which is why the
 `strict` boolean sits in the manifest and no flag bit does.
 
+**Check a BIOS the same way, and do not assume the device will.** A BIOS is a
+user-supplied file like a converter input, but it is installed rather than
+converted, so nothing downstream looks at it again. Where `sha1` is published,
+hash the file and compare; refuse a mismatch when the entry is `strict`. Honour
+`required` and `requiredFor` — the latter only bites when the user is installing
+a game with one of the extensions it names.
+
+The device is not a backstop here. ColecoVision's core allocates its 8 KiB,
+calls `odroid_sdcard_read_file` and ignores the return value: a truncated BIOS
+boots into uninitialised heap with no error. The firmware skips these checks
+because it runs on a slow machine. A browser has cycles to spare.
+
 **Reject unknown versions.** If `schemaVersion`, `processor.version` or
 `abi_version()` is a number you do not implement, refuse rather than guessing.
 
 **Verify artifacts too.** Every artifact carries a `sha256`. Check it. A
-mirror is not a trust boundary.
+mirror is not a trust boundary. The same goes for anything else the manifest
+names and you choose to fetch, `symbols[]` included — though a host is free not
+to fetch those at all, since they are never installed.
 
 **A produced binary is checked differently.** A file a converter produces has
 no published hash, because it is derived from what the user supplied and no two

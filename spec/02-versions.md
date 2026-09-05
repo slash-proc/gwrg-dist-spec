@@ -5,23 +5,27 @@ each to render a picker without fetching anything else.
 
 ## Example
 
+Real, not illustrative — this is the head of
+<https://slash-proc.github.io/mine-sweeper-retro-go-sd/dist/versions.json>.
+
 ```json
 {
   "schemaVersion": 1,
   "project": "minesweeper",
-  "title": "Minesweeper",
+  "title": "Mine Sweeper",
   "repo": "slash-proc/mine-sweeper-retro-go-sd",
   "releasesUrl": "https://github.com/slash-proc/mine-sweeper-retro-go-sd/releases",
   "retained": 5,
   "versions": [
     {
-      "tag": "v0.1.2",
-      "manifest": "v0.1.2/manifest.json",
-      "publishedAt": "2026-08-14T18:22:10Z",
+      "tag": "v0.1.3",
+      "manifest": "v0.1.3/manifest.json",
+      "publishedAt": "2026-09-05T19:44:57Z",
       "prerelease": false,
       "kind": "homebrew",
       "requiresAbi": { "version": 2, "minSize": 832 },
-      "needsUserFiles": false
+      "needsUserFiles": false,
+      "bundle": "minesweeper-v0.1.3-bundle.zip"
     }
   ]
 }

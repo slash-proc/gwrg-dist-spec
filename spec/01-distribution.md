@@ -21,9 +21,13 @@ This fails only in a browser, and only cross-origin. Every local test passes.
 
 ## The model
 
-**Releases are the source of truth.** Every file a user installs is attached to
-a GitHub release, along with the `manifest.json` describing them and the
-offline bundle. That is the archival record.
+**Releases are the source of truth.** Every file the manifest *names* is
+attached to a GitHub release, along with the `manifest.json` describing them and
+the offline bundle. That is the archival record.
+
+"Names", not "installs": debug symbols are named and published but never
+installed, and the mirror fetches them off the release like anything else. A
+file the manifest names and the release lacks is a broken deploy.
 
 The bundle is built at release time and attached, never assembled by the
 mirror, so what a user downloads offline is what the project published.

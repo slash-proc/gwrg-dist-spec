@@ -11,7 +11,7 @@ outlives the repository that published it.
 rewritten.
 
 ```
-minesweeper-v0.1.2-bundle.zip
+minesweeper-v0.1.3-bundle.zip
 ├── manifest.json
 └── minesweeper.bin
 ```
@@ -19,6 +19,12 @@ minesweeper-v0.1.2-bundle.zip
 Every `url` in a manifest is a plain relative filename, so the same resolution
 works against zip entries as against a URL. A tool needs one new resolver, not
 a second format.
+
+Because a bundle is the whole directory, it also carries whatever else the
+manifest names — a converter's `.wasm`, and the debug symbols. That is the
+point: a crash report is worth as much from an archived release as from a live
+one, and symbolicating it offline needs the ELF that shipped with those exact
+bytes.
 
 Name it `<project>-<tag>-bundle.zip`, all lower case.
 
@@ -34,10 +40,10 @@ at the zip root and one directory per tag, exactly as the site is laid out:
 ```
 minesweeper-all-bundle.zip
 ├── versions.json
-├── v0.1.2/
+├── v0.1.3/
 │   ├── manifest.json
 │   └── minesweeper.bin
-└── v0.1.1/
+└── v0.1.2/
     ├── manifest.json
     └── minesweeper.bin
 ```
@@ -53,9 +59,13 @@ A tool reads `versions.json` when present and falls back to a lone
 3. Validate against the schema, exactly as for a fetched manifest.
 4. Resolve each `url` to a zip entry in the same directory as its manifest.
    A `url` that names no entry is an error.
-5. Check every file's `bytes` and `sha256` before installing it.
+5. Check every file's `bytes` and `sha256` before using it.
 
 Ignore entries the manifest does not name. Do not install them.
+
+Verifying and installing are not the same step. Check every named file; install
+only the install set — artifacts plus the tool outputs a target uses. Symbols
+are verified and kept, never written to the card.
 
 ## Provenance
 
