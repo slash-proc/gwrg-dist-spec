@@ -51,7 +51,7 @@ itself, whose header carries it.
       "platform": "game-and-watch",
       "label": "Game & Watch (Retro-Go SD)",
       "kind": "homebrew",
-      "requiresAbi": { "version": 2, "minSize": 824 },
+      "requiresAbi": { "version": 2, "minSize": 832 },
       "artifacts": [
         {
           "filename": "minesweeper.bin",
@@ -132,7 +132,7 @@ absent key is indistinguishable from a truncated file.
       "platform": "game-and-watch",
       "label": "Game & Watch (Retro-Go SD)",
       "kind": "homebrew",
-      "requiresAbi": { "version": 2, "minSize": 824 },
+      "requiresAbi": { "version": 2, "minSize": 832 },
       "artifacts": [
         { "filename": "zelda3.bin",
           "bytes": 262144, "sha256": "…", "url": "zelda3.bin" },

@@ -22,7 +22,11 @@ This fails only in a browser, and only cross-origin. Every local test passes.
 ## The model
 
 **Releases are the source of truth.** Every file a user installs is attached to
-a GitHub release. That is the archival record.
+a GitHub release, along with the `manifest.json` describing them and the
+offline bundle. That is the archival record.
+
+The bundle is built at release time and attached, never assembled by the
+mirror, so what a user downloads offline is what the project published.
 
 **GitHub Pages is a mirror.** A CI job copies the released files into a Pages
 site, where a browser can read them. Pages is static hosting — it serves bytes
@@ -63,6 +67,25 @@ not showing. `releasesUrl` points users to the rest.
 
 Projects with large paired data files should lower N. Pages allows roughly 1 GB
 per site and 100 GB of bandwidth per month.
+
+A retained release was published against whatever the spec said at the time. If
+a later revision makes its manifest invalid, leave it in the releases and drop
+it from the mirror: publishing it anyway would make the whole project fail
+conformance over one old version nobody is installing.
+
+## Asset names are not filenames
+
+GitHub rewrites characters it will not accept in a release asset name. A space
+becomes a dot, so `Super Mario World.bin` is attached as
+`Super.Mario.World.bin`.
+
+The manifest declares the name the *device* wants, because that is what the
+launcher displays and what an installer writes to the card. So the mirror
+downloads the asset under whatever GitHub called it and restores the declared
+name on the way in. The rewrite is a property of the archival copy, not
+something a manifest should have to know about.
+
+A project whose filenames are all `[A-Za-z0-9._-]` never encounters this.
 
 ## Fallback
 

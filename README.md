@@ -23,7 +23,7 @@ mandatory, not advisory.
 
 ## Minimum conforming project
 
-A homebrew with no proprietary assets publishes two files:
+A homebrew with no proprietary assets publishes three files:
 
 ```
 dist/versions.json
@@ -65,12 +65,24 @@ change together. A tool that does not implement a version refuses it.
 
 Current version: **1**.
 
+While the spec is a draft it moves faster than the projects that implement it,
+and the two are deployed separately. **Deploy a spec change before a project
+publishes a manifest that uses it.** The conformance checker validates against
+the schema hosted here, so a project that ships a new field first is reported
+as broken until this site catches up. The reverse case is handled: a mirror
+drops a release whose manifest no longer validates, rather than failing the
+whole project over an old version.
+
 ## Status
 
-Draft. The spec is being written alongside its first three implementations:
+Draft. The spec is being written alongside its first implementations, all
+homebrew; emulator cores have not been modelled yet.
 
-- [mine-sweeper-retro-go-sd](https://github.com/slash-proc/mine-sweeper-retro-go-sd) — homebrew, no converter
-- [smw](https://github.com/slash-proc/smw) — homebrew with a converter
-- [zelda3](https://github.com/slash-proc/zelda3) — homebrew with a converter, multiple inputs
+| Project | Shape | State |
+|---|---|---|
+| [mine-sweeper-retro-go-sd](https://github.com/slash-proc/mine-sweeper-retro-go-sd) | no converter | published, conformant |
+| [snake-retro-go-sd](https://github.com/slash-proc/snake-retro-go-sd) | no converter | published, conformant |
+| [smw-retro-go-sd](https://github.com/slash-proc/smw-retro-go-sd) | one converter, one input | not yet released |
+| [zelda3-retro-go-sd](https://github.com/slash-proc/zelda3-retro-go-sd) | one converter, repeatable inputs | in progress |
 
-Breaking changes are expected until all three ship a tagged release.
+Breaking changes are expected until all four ship a tagged release.

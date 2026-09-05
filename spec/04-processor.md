@@ -118,6 +118,12 @@ rustflags = ["-C", "link-arg=--max-memory=268435456"]
 
 Without it the module declares unbounded growth and fails verification.
 
+The number is per-project and should be measured, not copied. Cap it at a
+comfortable multiple of the worst case an actual run needs, and say in the file
+what that measurement was — zelda3 peaks at 118 pages converting three
+languages and caps at 1024; smw caps at 4096. `limits.maxMemoryPages` in the
+manifest reports whatever the binary declares, so the two cannot disagree.
+
 Keep an `rlib` and a native `[[bin]]` harness alongside the `cdylib`. The same
 extraction code then runs without a WASM runtime, which is what makes it
 diffable against the original script.
