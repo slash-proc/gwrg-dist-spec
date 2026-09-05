@@ -148,7 +148,7 @@
         "label": { "$ref": "#/$defs/localised" },
         "extensions": { "type": "array", "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" } },
         "maxBytes": { "type": "integer", "minimum": 1 },
-        "acceptsModified": { "type": "boolean" },
+        "strict": { "type": "boolean" },
         "variants": { "type": "array", "items": { "$ref": "#/$defs/variant" } }
       }
     },

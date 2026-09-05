@@ -68,7 +68,7 @@ full.tools = [{
   title: { en: "Zelda 3 asset extraction", de: "Zelda 3 Ressourcen" },
   binary: { file: "extractor.wasm", url: "extractor.wasm", bytes: 1842301, sha256: HASH },
   limits: { maxMemoryPages: 4096, maxOutputBytes: 4194304 },
-  options: [{ id: "noHashCheck", bit: 0, default: false, label: { en: "Accept a modified ROM" } }],
+  options: [],
   inputs: [
     {
       id: "base", required: true, repeatable: false, label: { en: "Zelda 3 ROM (USA)" },
@@ -157,6 +157,27 @@ expect("accepts a docs link", validate(docs, manifestSchema), true);
 // scheme an installer might be tempted to follow.
 bad("rejects a non-https docs link", (d) => { d.docs = "http://example.com/"; });
 bad("rejects a docs filename", (d) => { d.docs = "README.md"; });
+
+const strictOff = structuredClone(full);
+strictOff.tools[0].inputs[0].strict = false;
+expect("accepts strict on an input", validate(strictOff, manifestSchema), true);
+
+// The field it replaced. A manifest still emitting it was written against the
+// older draft and means the opposite of what its name now suggests, so it is
+// refused rather than quietly ignored.
+const oldFlag = structuredClone(full);
+oldFlag.tools[0].inputs[0].acceptsModified = true;
+expect("rejects the old acceptsModified field", validate(oldFlag, manifestSchema), false);
+
+const strictWord = structuredClone(full);
+strictWord.tools[0].inputs[0].strict = "yes";
+expect("rejects a non-boolean strict", validate(strictWord, manifestSchema), false);
+
+// A tool with no user-settable choices says so. smw is the first: once the
+// hash bypass became `strict`, it had no options left.
+const noOptions = structuredClone(full);
+noOptions.tools[0].options = [];
+expect("accepts a tool with no options", validate(noOptions, manifestSchema), true);
 
 const noEn = structuredClone(full);
 noEn.tools[0].title = { de: "Nur Deutsch" };

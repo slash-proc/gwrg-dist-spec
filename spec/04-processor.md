@@ -76,6 +76,19 @@ for `output_len(i)` bytes.
 hashing its content, so a mislabelled file cannot be smuggled into the wrong
 role.
 
+**A module hashes to resolve roles, never to refuse a file.** Whether an
+unrecognised file is allowed at all is settled before the run, by the host,
+from the input's `strict` flag and its `variants[]` — see
+[host requirements](05-host.md). By the time bytes reach `input_add` that
+decision has been made, and a module that second-guesses it can only disagree
+with the manifest it was published beside.
+
+So a module handed a file it cannot place must do the best it can — treat it as
+the role its position and the project's own rules imply — and say so through
+`warnings`, rather than failing the run. Failing is for a file it cannot
+process at all, which is a different statement: not "I do not recognise this"
+but "this is not usable".
+
 ## Progress
 
 A module that imports nothing cannot call out to report progress, and its
@@ -94,7 +107,13 @@ bar. Stage names are short and user-facing.
 ## Flags
 
 `flags` is a bitfield. Bit meanings are per-project and declared in the
-manifest's `tools[].options[]`. Unlisted bits are reserved and must be zero.
+manifest's `tools[].options[]`. Unlisted bits are reserved and must be zero. A
+module with nothing to offer the user declares `"options": []` and is always
+called with `flags` of zero.
+
+Options are for genuine choices about what to produce. They are not a channel
+for telling a module how to treat its inputs: that is decided by the manifest
+and enforced by the host before the run starts.
 
 ## Errors
 

@@ -38,6 +38,22 @@ output names against a strict pattern — plain file name, no separators, no
 cannot have one. Terminating the Worker is the only way to stop a run and the
 only way to reclaim its memory.
 
+**Enforce `strict` yourself.** Hash each file the user supplies and compare it
+against that input's `variants[]`. On no match: refuse the file when the input
+is `strict` (the default), and when it is not, accept it but tell the user it
+was not recognised. Check `maxBytes` in the same pass.
+
+This is the host's job because the host is the only party that can do it. It
+has the file, the hash table and the user; the module has bytes and no way to
+ask a question. Doing it before a run also means an obviously wrong file costs
+nothing.
+
+A module cannot be relied on to do this for you: it hashes content to work out
+which input is which — that is how roles are resolved — but it must accept what
+it is handed. If a module refuses a file the host chose to allow, the two
+disagree about a decision that has only one right answer, which is why the
+`strict` boolean sits in the manifest and no flag bit does.
+
 **Reject unknown versions.** If `schemaVersion`, `processor.version` or
 `abi_version()` is a number you do not implement, refuse rather than guessing.
 

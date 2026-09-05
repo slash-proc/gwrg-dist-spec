@@ -89,10 +89,7 @@ absent key is indistinguishable from a truncated file.
         "sha256": "a41b7c…"
       },
       "limits": { "maxMemoryPages": 4096, "maxOutputBytes": 4194304 },
-      "options": [
-        { "id": "noHashCheck", "bit": 0, "default": false,
-          "label": { "en": "Accept a modified ROM" } }
-      ],
+      "options": [],
       "inputs": [
         {
           "id": "base",
@@ -239,12 +236,34 @@ ceilings a host rejects it against.
 | `extensions` | yes | For the file picker. A hint, never a check |
 | `maxBytes` | yes | Reject larger files without running |
 | `variants` | no | Known-good files: `id`, `sha1`, optional `bytes` |
-| `acceptsModified` | no | True if a non-matching file may still be tried |
+| `strict` | no | Default `true`. Refuse a file matching no variant |
 
 **Roles are resolved by the module from file content, never from order or from
 a name the host supplies.** `inputs[]` exists so a UI can ask for the right
 files and reject an obviously wrong one before spending a run. It is not how
 the module learns what it was given.
+
+#### `strict`
+
+`variants[]` says which files an input recognises. `strict` says what to do
+about a file that is none of them:
+
+- `strict: true`, the default — refuse it. zelda3's `language` input is strict:
+  an unrecognised translation is useless, because the converter would not know
+  which language it was reading.
+- `strict: false` — try it, and tell the user it was not recognised. smw's
+  `base` input is not strict: a Lunar Magic hack cannot match a known hash by
+  construction, so refusing every unrecognised ROM would refuse the whole point.
+
+**The host decides this, not the module.** The host has the file, the hashes
+and the user in front of it; it hashes, compares, and either refuses before
+spending a run or warns and proceeds. A module is handed whatever survives that
+and converts it.
+
+That is why no flag is involved. An earlier draft had each project declare an
+option bit meaning "accept a stranger", which put the decision in two places
+and let a manifest and a module disagree about it. One boolean, enforced in one
+place, cannot.
 
 ### Outputs
 
