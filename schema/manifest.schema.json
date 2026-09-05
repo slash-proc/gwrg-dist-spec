@@ -146,6 +146,7 @@
         "required": { "type": "boolean" },
         "repeatable": { "type": "boolean" },
         "label": { "$ref": "#/$defs/localised" },
+        "description": { "$ref": "#/$defs/localised" },
         "extensions": { "type": "array", "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" } },
         "maxBytes": { "type": "integer", "minimum": 1 },
         "strict": { "type": "boolean" },
@@ -172,7 +173,9 @@
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "filename": { "$ref": "#/$defs/filename" },
-        "maxBytes": { "type": "integer", "minimum": 1 }
+        "maxBytes": { "type": "integer", "minimum": 1 },
+        "label": { "$ref": "#/$defs/localised" },
+        "description": { "$ref": "#/$defs/localised" }
       }
     }
   }

@@ -233,6 +233,7 @@ ceilings a host rejects it against.
 | `required` | yes | Boolean |
 | `repeatable` | yes | May the user supply more than one |
 | `label` | no | Localised. Omit when the title says enough |
+| `description` | no | Localised. What this file is and where a user gets it |
 | `extensions` | yes | For the file picker. A hint, never a check |
 | `maxBytes` | yes | Reject larger files without running |
 | `variants` | no | Known-good files: `id`, `sha1`, optional `bytes` |
@@ -272,6 +273,8 @@ place, cannot.
 | `id` | yes | Referenced by `uses[].outputs` |
 | `filename` | yes | Name on the card |
 | `maxBytes` | yes | Ceiling |
+| `label` | no | Localised. A name for the file a user just produced |
+| `description` | no | Localised. What it is for |
 
 A module names its own outputs at runtime. Those names are checked against this
 list. The manifest decides what a legitimate run produces; the module does not
@@ -283,7 +286,15 @@ Localised fields are objects keyed by language code, with `en` always present.
 A tool falls back to `en` for any locale it has no entry for.
 
 Localised: `tools[].title`, `tools[].inputs[].label`,
-`tools[].options[].label`.
+`tools[].inputs[].description`, `tools[].inputs[].variants[].label`,
+`tools[].options[].label`, `tools[].outputs[].label`,
+`tools[].outputs[].description`.
+
+A manifest carries this copy so that every installer says the same thing. An
+input is a file the user has to go and find, and "Translated ROM" does not tell
+them why they would want one; the project knows and a generic installer does
+not. Leaving it out means each consumer invents its own wording, and the
+project cannot correct it without waiting for that consumer to ship.
 
 Not localised: platform labels, filenames, ids.
 

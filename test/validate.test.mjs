@@ -179,6 +179,18 @@ const noOptions = structuredClone(full);
 noOptions.tools[0].options = [];
 expect("accepts a tool with no options", validate(noOptions, manifestSchema), true);
 
+// Copy a project owns: an input a user must go and find needs explaining, and
+// the explanation belongs with the project rather than in each installer.
+const copy = structuredClone(full);
+copy.tools[0].inputs[0].description = { en: "US (NTSC) cartridge dump." };
+copy.tools[0].outputs[0].label = { en: "Asset pack" };
+copy.tools[0].outputs[0].description = { en: "What the game reads at startup." };
+expect("accepts localised input and output copy", validate(copy, manifestSchema), true);
+
+const plainDesc = structuredClone(full);
+plainDesc.tools[0].inputs[0].description = "just a string";
+expect("rejects an unlocalised description", validate(plainDesc, manifestSchema), false);
+
 const noEn = structuredClone(full);
 noEn.tools[0].title = { de: "Nur Deutsch" };
 expect("rejects a localised object without en", validate(noEn, manifestSchema), false);
