@@ -195,5 +195,116 @@ const noEn = structuredClone(full);
 noEn.tools[0].title = { de: "Nur Deutsch" };
 expect("rejects a localised object without en", validate(noEn, manifestSchema), false);
 
+// --- emulator cores ---------------------------------------------------------
+
+const emulator = {
+  schemaVersion: 1,
+  project: "gwenesis",
+  title: "Gwenesis",
+  source: { repo: "slash-proc/gwenesis-retro-go-sd", commit: "daf6c0f", ref: "v0.0.2" },
+  tools: [],
+  targets: [{
+    id: "gnw-retro-go",
+    platform: "game-and-watch",
+    label: "Game & Watch (Retro-Go SD)",
+    kind: "emulator",
+    requiresAbi: { version: 2, minSize: 840 },
+    artifacts: [{ filename: "gwenesis.bin", bytes: 262144, sha256: HASH, url: "gwenesis.bin" }],
+    symbols: [{
+      filename: "gwenesis_core.elf", url: "gwenesis_core.elf",
+      bytes: 1184032, sha256: HASH, format: "elf",
+    }],
+    systems: [{
+      id: "md",
+      longName: "Sega Genesis",
+      shortName: "Genesis",
+      extensions: [".md", ".gen", ".bin"],
+      browse: "file",
+      compression: false,
+    }],
+  }],
+};
+expect("emulator with one system", validate(emulator, manifestSchema), true);
+
+// One binary, several launcher tabs, a grouped extension and a BIOS.
+const multi = structuredClone(emulator);
+multi.project = "pce";
+multi.targets[0].systems = [
+  {
+    id: "pce", longName: "PC Engine", shortName: "PCE",
+    extensions: [".pce"], browse: "file", compression: false, cheatExt: "pceplus",
+  },
+  {
+    id: "pcecd", longName: "PC Engine CD", shortName: "PCE CD",
+    extensions: [[".cue", ".bin"]], browse: "directory", compression: false,
+    cheatExt: "pceplus",
+    bios: [{
+      id: "syscard3",
+      filename: ["syscard3.pce", "syscard3.bin"],
+      required: true,
+      sha1: "79F5FF55DD10187C7FD7B8DAAB0B3FFBD1F56A2C",
+      strict: true,
+      label: { en: "System Card 3" },
+      description: { en: "Required. CD games will not start without it." },
+    }],
+  },
+];
+expect("emulator with several systems, a group and a BIOS", validate(multi, manifestSchema), true);
+
+// A BIOS that only some of the system's extensions need.
+const byExt = structuredClone(emulator);
+byExt.targets[0].systems[0].bios = [{
+  id: "disksys", filename: "disksys.rom", requiredFor: [".fds"],
+  bytes: 8192, sha1: "5".repeat(40), strict: true,
+  label: { en: "Famicom Disk System BIOS" },
+}];
+expect("a BIOS required by extension", validate(byExt, manifestSchema), true);
+
+// A homebrew has no systems, and that is the normal case.
+expect("homebrew without systems", validate(minimal, manifestSchema), true);
+
+const badEmu = (name, mutate) => {
+  const doc = structuredClone(emulator);
+  mutate(doc);
+  expect(name, validate(doc, manifestSchema), false);
+};
+
+// A group of one is a string written the long way, and two spellings of one
+// thing is how a schema starts drifting.
+badEmu("rejects a one-element extension group",
+  (d) => { d.targets[0].systems[0].extensions = [[".cue"]]; });
+badEmu("rejects an extension without its dot",
+  (d) => { d.targets[0].systems[0].extensions = ["md"]; });
+badEmu("rejects an empty extension list",
+  (d) => { d.targets[0].systems[0].extensions = []; });
+// Console names are regional, not linguistic: a language-keyed object is the
+// wrong mechanism and would invite a wrong answer in a well-typed field.
+badEmu("rejects a localised longName",
+  (d) => { d.targets[0].systems[0].longName = { en: "Sega Genesis" }; });
+badEmu("rejects a cheatExt with a leading dot",
+  (d) => { d.targets[0].systems[0].cheatExt = ".ggcodes"; });
+badEmu("rejects an unknown browse mode",
+  (d) => { d.targets[0].systems[0].browse = "cdrom"; });
+badEmu("rejects a system without compression stated",
+  (d) => { delete d.targets[0].systems[0].compression; });
+badEmu("rejects a system id with a slash",
+  (d) => { d.targets[0].systems[0].id = "roms/md"; });
+badEmu("rejects an absolute symbols url",
+  (d) => { d.targets[0].symbols[0].url = "https://evil.example/x.elf"; });
+badEmu("rejects an unknown symbols format",
+  (d) => { d.targets[0].symbols[0].format = "dwarf"; });
+badEmu("rejects a BIOS filename list of one",
+  (d) => {
+    d.targets[0].systems[0].bios = [{
+      id: "x", filename: ["only.rom"], required: true, label: { en: "X" },
+    }];
+  });
+badEmu("rejects a BIOS with an unlocalised label",
+  (d) => {
+    d.targets[0].systems[0].bios = [{
+      id: "x", filename: "x.rom", required: true, label: "X",
+    }];
+  });
+
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

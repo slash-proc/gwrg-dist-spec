@@ -9,7 +9,7 @@ const HANDLED = new Set([
   "$schema", "$id", "$defs", "title", "description",
   "type", "const", "enum", "required", "properties", "additionalProperties",
   "propertyNames", "items", "minItems", "minLength", "pattern",
-  "minimum", "maximum", "format", "$ref",
+  "minimum", "maximum", "format", "$ref", "anyOf",
 ]);
 
 function typeOf(v) {
@@ -48,6 +48,19 @@ export function validate(instance, schema, root = schema, path = "") {
 
   if (schema.$ref) {
     return validate(instance, resolve(schema.$ref, root), root, path);
+  }
+
+  // A union of shapes. Needed because two fields are genuinely either a string
+  // or a list: an extension entry (".cue" or [".cue", ".bin"]) and a BIOS
+  // filename (one accepted name or several). Expressing that in the published
+  // schema rather than in our own checker is the point -- a third party
+  // validating with Ajv has to be able to reject a malformed one too.
+  if (schema.anyOf) {
+    const attempts = schema.anyOf.map((sub) => validate(instance, sub, root, path));
+    if (!attempts.some((errs) => errs.length === 0)) {
+      const why = attempts.map((errs) => errs.join("; ")).join(" | ");
+      return [`${at}: matches none of the allowed shapes (${why})`];
+    }
   }
 
   const actual = typeOf(instance);

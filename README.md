@@ -8,7 +8,7 @@ what versions exist, what files they need, and whether the user must supply a
 ROM. It then fetches the files, runs any conversion in the browser, and writes
 an SD card. No coordination with the tool's authors is required.
 
-## The four pieces
+## The pieces
 
 | Piece | What it is |
 |---|---|
@@ -17,6 +17,7 @@ an SD card. No coordination with the tool's authors is required.
 | [`manifest.json`](spec/03-manifest.md) | One version: its files and its converter |
 | [Processor ABI](spec/04-processor.md) | How a converter is called |
 | [Offline bundles](spec/06-bundle.md) | Installing without a network |
+| [Emulator cores](spec/07-emulators.md) | The systems a core provides |
 
 Tool authors also read [host requirements](spec/05-host.md), which are
 mandatory, not advisory.
@@ -75,14 +76,16 @@ whole project over an old version.
 
 ## Status
 
-Draft. The spec is being written alongside its first implementations, all
-homebrew; emulator cores have not been modelled yet.
+Draft. The spec is being written alongside its implementations. Four homebrew
+projects publish under it today; emulator cores are modelled
+([spec/07](spec/07-emulators.md)) but none has been ported yet.
 
 | Project | Shape | State |
 |---|---|---|
 | [mine-sweeper-retro-go-sd](https://github.com/slash-proc/mine-sweeper-retro-go-sd) | no converter | published, conformant |
 | [snake-retro-go-sd](https://github.com/slash-proc/snake-retro-go-sd) | no converter | published, conformant |
 | [smw-retro-go-sd](https://github.com/slash-proc/smw-retro-go-sd) | one converter, one input | not yet released |
-| [zelda3-retro-go-sd](https://github.com/slash-proc/zelda3-retro-go-sd) | one converter, repeatable inputs | in progress |
+| [zelda3-retro-go-sd](https://github.com/slash-proc/zelda3-retro-go-sd) | one converter, repeatable inputs | published, conformant |
+| the emulator cores | one binary, one to four systems | modelled, not yet ported |
 
-Breaking changes are expected until all four ship a tagged release.
+Breaking changes are expected while the first cores are ported.

@@ -158,7 +158,15 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     say(ERROR, `${tag}: index kind is not offered by any target`,
       `index says "${entry.kind}", targets offer ${[...kinds].join(", ")}`);
   }
-  const needsFiles = manifest.tools.some((t) => t.inputs.some((i) => i.required));
+  // "Must the user supply something?" -- a converter input or a BIOS both count.
+  // Every emulator has `tools: []`, so counting only tool inputs would publish
+  // false for a core that cannot run a game without a System Card. A
+  // conditionally required BIOS (`requiredFor`) counts too: the picker's job is
+  // to warn that files may be needed, not to predict which games get played.
+  const needsBios = manifest.targets.some((t) =>
+    (t.systems ?? []).some((sys) =>
+      (sys.bios ?? []).some((b) => b.required === true || (b.requiredFor ?? []).length > 0)));
+  const needsFiles = manifest.tools.some((t) => t.inputs.some((i) => i.required)) || needsBios;
   if (entry.needsUserFiles !== undefined && entry.needsUserFiles !== needsFiles) {
     say(ERROR, `${tag}: needsUserFiles disagrees with the manifest`,
       `index says ${entry.needsUserFiles}, manifest implies ${needsFiles}`);
@@ -178,6 +186,50 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     // may ship its files, or a converter may produce them from something the
     // user supplies. The rule below counts the whole set rather than the
     // shipped half.
+    // JSON Schema could say these with if/then and oneOf; site/validate.js
+    // deliberately implements only the keywords the schemas use, and a
+    // conditional keyword set is a lot of machinery for two rules. They live
+    // here instead, and spec/07-emulators.md says so.
+    if (target.kind === "emulator" && !(target.systems ?? []).length) {
+      say(ERROR, `${tag}/${target.id}: an emulator declares no systems`,
+        "kind is emulator, so systems[] must list at least one launcher tab");
+    }
+    if (target.kind === "homebrew" && target.systems !== undefined) {
+      say(ERROR, `${tag}/${target.id}: a homebrew declares systems`,
+        "systems[] belongs to an emulator core; a homebrew is one program");
+    }
+
+    const sysIds = (target.systems ?? []).map((sys) => sys.id);
+    const sysDupes = sysIds.filter((id, i) => sysIds.indexOf(id) !== i);
+    if (sysDupes.length) {
+      say(ERROR, `${tag}/${target.id}: duplicate system ids`, [...new Set(sysDupes)].join(", "));
+    }
+
+    for (const sys of target.systems ?? []) {
+      for (const b of sys.bios ?? []) {
+        const hasRequired = b.required !== undefined;
+        const hasRequiredFor = b.requiredFor !== undefined;
+        if (hasRequired === hasRequiredFor) {
+          say(ERROR, `${tag}/${target.id}/${sys.id}: bios "${b.id}" states its requirement twice or not at all`,
+            "exactly one of required or requiredFor");
+        }
+        // A slot that refuses anything it does not recognise, with nothing to
+        // recognise, can never be filled.
+        if (b.strict === true && !b.sha1) {
+          say(ERROR, `${tag}/${target.id}/${sys.id}: bios "${b.id}" is strict with no hash`,
+            "strict rejects every file when no sha1 is published");
+        }
+        for (const ext of b.requiredFor ?? []) {
+          const known = (sys.extensions ?? []).some((e) =>
+            Array.isArray(e) ? e.includes(ext) : e === ext);
+          if (!known) {
+            say(ERROR, `${tag}/${target.id}/${sys.id}: bios "${b.id}" is required for ${ext}`,
+              `which this system does not accept`);
+          }
+        }
+      }
+    }
+
     const installed = target.artifacts.map((a) => a.filename);
 
     for (const use of target.uses ?? []) {
@@ -228,6 +280,10 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   const files = [];
   for (const target of manifest.targets) {
     for (const a of target.artifacts) files.push({ what: `${target.id}/${a.filename}`, ...a });
+    // Published and hashed like an artifact, but never installed.
+    for (const sym of target.symbols ?? []) {
+      files.push({ what: `${target.id}/${sym.filename} (symbols)`, ...sym });
+    }
   }
   for (const tool of manifest.tools) {
     out.tools.push(tool);

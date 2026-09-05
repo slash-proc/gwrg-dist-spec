@@ -49,7 +49,7 @@ each to render a picker without fetching anything else.
 | `prerelease` | yes | Boolean |
 | `kind` | yes | `homebrew` or `emulator` |
 | `requiresAbi` | yes | Firmware ABI this build needs |
-| `needsUserFiles` | yes | True if any tool declares a required input |
+| `needsUserFiles` | yes | True if the user must supply a file — see below |
 | `bundle` | no | Filename of an [offline bundle](06-bundle.md) for this version |
 
 `requiresAbi.version` and `requiresAbi.minSize` are read out of the packed
@@ -62,6 +62,16 @@ compares in. The table is 4-byte entries — two `uint32_t` header fields
 followed by function pointers — so 840 bytes is a table of 210 entries. Since
 fields are only ever appended, "needs at least 840 bytes" and "needs at least
 the first 210 entries" say the same thing.
+
+`needsUserFiles` is true when **any tool declares a required input, or any
+system declares a required BIOS**. Both mean the same thing to a user: they have
+to go and find a file before this will work.
+
+Counting only tool inputs would be wrong for every emulator core, because a core
+has `tools: []` — PC Engine CD would advertise `needsUserFiles: false` and then
+refuse to start without a System Card. A conditionally required BIOS
+(`requiredFor`) counts too: the flag warns that files may be needed, and it
+cannot know which games somebody intends to play.
 
 `kind`, `requiresAbi` and `needsUserFiles` are duplicated from the manifest so
 a picker can warn about incompatible firmware and label a version as needing a

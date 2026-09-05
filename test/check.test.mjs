@@ -202,6 +202,111 @@ r = await check("owner/repo", opts);
 expect("catches out-of-order versions",
   errorsOf(r).some((e) => e.includes("newest first")), errorsOf(r).join(" | "));
 
+// --- emulator rules the schema cannot state -------------------------------
+//
+// These live in check.js because site/validate.js implements only the keywords
+// the schemas use, and if/then plus oneOf is a lot of machinery for two rules.
+
+const emuTarget = () => ({
+  id: "gnw-retro-go", platform: "game-and-watch",
+  label: "Game & Watch (Retro-Go SD)", kind: "emulator",
+  requiresAbi: { version: 2, minSize: 840 },
+  artifacts: [{ filename: "MineSweeper.bin", bytes: 0, sha256: HASH_EMPTY, url: "MineSweeper.bin" }],
+  systems: [{
+    id: "md", longName: "Sega Genesis", shortName: "Genesis",
+    extensions: [".md", ".gen"], browse: "file", compression: false,
+  }],
+});
+const emuIndex = () => index({ versions: [{ ...index().versions[0], kind: "emulator",
+  requiresAbi: { version: 2, minSize: 840 } }] });
+
+set(emuIndex(), manifest({ targets: [emuTarget()] }));
+r = await check("owner/repo", opts);
+expect("a conformant emulator passes", r.summary.conformant, errorsOf(r).join(" | "));
+
+// kind says emulator, nothing says which systems.
+const noSystems = emuTarget();
+delete noSystems.systems;
+set(emuIndex(), manifest({ targets: [noSystems] }));
+r = await check("owner/repo", opts);
+expect("catches an emulator with no systems",
+  errorsOf(r).some((e) => e.includes("declares no systems")), errorsOf(r).join(" | "));
+
+// systems[] belongs to a core; a homebrew is one program.
+set(index(), manifest({ targets: [{ ...manifest().targets[0], systems: emuTarget().systems }] }));
+r = await check("owner/repo", opts);
+expect("catches a homebrew declaring systems",
+  errorsOf(r).some((e) => e.includes("homebrew declares systems")), errorsOf(r).join(" | "));
+
+// Exactly one of required / requiredFor.
+const bothWays = emuTarget();
+bothWays.systems[0].bios = [{
+  id: "x", filename: "x.rom", required: true, requiredFor: [".md"], label: { en: "X" },
+}];
+set(emuIndex({}), manifest({ targets: [bothWays] }));
+r = await check("owner/repo", opts);
+expect("catches a BIOS stating its requirement twice",
+  errorsOf(r).some((e) => e.includes("requirement twice")), errorsOf(r).join(" | "));
+
+const neitherWay = emuTarget();
+neitherWay.systems[0].bios = [{ id: "x", filename: "x.rom", label: { en: "X" } }];
+set(emuIndex(), manifest({ targets: [neitherWay] }));
+r = await check("owner/repo", opts);
+expect("catches a BIOS stating no requirement at all",
+  errorsOf(r).some((e) => e.includes("requirement twice or not at all")), errorsOf(r).join(" | "));
+
+// A strict slot with no hash can never be filled.
+const strictNoHash = emuTarget();
+strictNoHash.systems[0].bios = [{
+  id: "x", filename: "x.rom", required: true, strict: true, label: { en: "X" },
+}];
+set(emuIndex(), manifest({ targets: [strictNoHash] }));
+r = await check("owner/repo", opts);
+expect("catches a strict BIOS with no hash",
+  errorsOf(r).some((e) => e.includes("strict with no hash")), errorsOf(r).join(" | "));
+
+// requiredFor must name an extension the system actually accepts.
+const unknownExt = emuTarget();
+unknownExt.systems[0].bios = [{
+  id: "x", filename: "x.rom", requiredFor: [".fds"], label: { en: "X" },
+}];
+set(emuIndex(), manifest({ targets: [unknownExt] }));
+r = await check("owner/repo", opts);
+expect("catches requiredFor naming an unaccepted extension",
+  errorsOf(r).some((e) => e.includes("does not accept")), errorsOf(r).join(" | "));
+
+// A required BIOS means the user must supply something, even with tools: [].
+const withBios = emuTarget();
+withBios.systems[0].bios = [{
+  id: "x", filename: "x.rom", required: true, label: { en: "X" },
+}];
+set(emuIndex(), manifest({ targets: [withBios] }));
+r = await check("owner/repo", opts);
+expect("a required BIOS makes needsUserFiles true",
+  errorsOf(r).some((e) => e.includes("needsUserFiles")), errorsOf(r).join(" | "));
+
+// Symbols are fetched and verified like an artifact, but never installed.
+const withSymbols = emuTarget();
+withSymbols.symbols = [{
+  filename: "core.elf", url: "core.elf", bytes: 1, sha256: HASH_ONE, format: "elf",
+}];
+set(emuIndex(), manifest({ targets: [withSymbols] }),
+    { "/dist/v0.1.2/core.elf": Buffer.from([0]) });
+r = await check("owner/repo", { ...opts, hash: true });
+expect("verifies a published symbols file", r.summary.conformant, errorsOf(r).join(" | "));
+expect("symbols are not part of the install set",
+  !r.versions[0].targets[0].installed.includes("core.elf"),
+  r.versions[0].targets[0].installed.join(", "));
+
+const missingSymbols = emuTarget();
+missingSymbols.symbols = [{
+  filename: "core.elf", url: "core.elf", bytes: 1, sha256: HASH_ONE, format: "elf",
+}];
+set(emuIndex(), manifest({ targets: [missingSymbols] }));
+r = await check("owner/repo", opts);
+expect("catches an unpublished symbols file",
+  errorsOf(r).some((e) => e.includes("core.elf")), errorsOf(r).join(" | "));
+
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

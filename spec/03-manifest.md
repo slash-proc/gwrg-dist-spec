@@ -18,6 +18,12 @@ Every file in an install comes from one of two places:
 **The install set is every artifact, plus the declared outputs of every tool in
 `uses[]`.** There is no separate list. Nothing to keep in sync.
 
+**`symbols[]` is the one published thing that is not installed.** It is fetched
+and hashed like an artifact and it lands in `dist/<tag>/`, so an offline bundle
+carries it — but it never reaches the card. Read the sentence above as exactly
+what it says: the install set is artifacts plus tool outputs, and symbols are
+neither.
+
 The file the launcher starts is the one named `.bin`; the firmware finds it by
 scanning for that extension, so the manifest does not label it. It may arrive
 from either half: usually the project ships it as an artifact, but it may
@@ -167,6 +173,31 @@ absent key is indistinguishable from a truncated file.
 | `requiresAbi` | yes | Firmware ABI needed. Advisory when the binary is produced |
 | `artifacts` | yes | Compiled files. May be empty if the binary is produced |
 | `uses` | no | Converters this target needs |
+| `symbols` | no | Debug symbols. Published, never installed |
+| `systems` | see below | Launcher tabs. Emulator cores only |
+
+`systems[]` is required when `kind` is `emulator` and forbidden when `kind` is
+`homebrew` — see [emulator cores](07-emulators.md). A homebrew is one program
+and has no launcher tab of its own.
+
+### Symbols
+
+| Field | Required | |
+|---|---|---|
+| `filename` | yes | Name of the file |
+| `url` | yes | A plain filename, resolved beside this manifest |
+| `bytes` | yes | Size |
+| `sha256` | yes | Of the file |
+| `format` | yes | Currently `elf` |
+
+An ELF lets a tool turn a crash address into a function and a line, which turns
+"it froze" into a bug report somebody can act on. Every project already builds
+one; without a manifest entry no tool can find it.
+
+It is per-binary, so it belongs to a target rather than the manifest root: the
+symbols must describe the artifact delivered beside them. It is deliberately
+outside the install set — a megabyte of debug information on the card helps
+nobody.
 
 ### Placement
 
