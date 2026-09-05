@@ -38,6 +38,7 @@ itself, whose header carries it.
   "schemaVersion": 1,
   "project": "minesweeper",
   "title": "Minesweeper",
+  "docs": "https://github.com/slash-proc/mine-sweeper-retro-go-sd#readme",
   "source": {
     "repo": "slash-proc/mine-sweeper-retro-go-sd",
     "commit": "daf6c0f4e2b1a09c3d5f7e8a1b2c3d4e5f6a7b8c",
@@ -153,6 +154,7 @@ absent key is indistinguishable from a truncated file.
 | `schemaVersion` | yes | Integer |
 | `project` | yes | Matches `versions.json` |
 | `title` | yes | Display name |
+| `docs` | no | Absolute `https://` URL. Where a human reads about this project |
 | `source` | yes | `repo`, `commit`, `ref` — what built this |
 | `tools` | yes | Converters. `[]` when none |
 | `targets` | yes | One per platform |
@@ -187,7 +189,7 @@ alongside it.
 
 | Field | Required | |
 |---|---|---|
-| `filename` | yes | Name on the card. No path separators |
+| `filename` | yes | Name on the card. No path separators. Spaces allowed |
 | `bytes` | yes | Size |
 | `sha256` | yes | Of the file |
 | `url` | yes | A plain filename, resolved beside this manifest |
@@ -274,3 +276,15 @@ Every `url` is a plain filename — no scheme, no host, no path separators, no
 This is what lets the same manifest work unchanged from a website and from
 [an offline bundle](06-bundle.md), and it stops a manifest sending an installer
 to another origin.
+
+`docs` is the one exception, and it is not a `url`: it is an absolute
+`https://` link a UI may show a human, and never something an installer
+fetches. Point it at the project's README. Documentation is a property of the
+project, not of an individual file — nothing below the top level links out.
+
+A filename may contain spaces, because the device does: a homebrew ships as
+`Super Mario World.bin` and the launcher displays what it finds. It must still
+begin and end with a non-space character, so a name cannot hide leading or
+trailing whitespace that a card would silently keep. Resolving such a `url`
+percent-encodes the space, which is what every URL parser already does; a zip
+entry keeps it literal.

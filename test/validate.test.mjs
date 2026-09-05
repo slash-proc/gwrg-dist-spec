@@ -119,6 +119,22 @@ bad("rejects an unknown kind", (d) => { d.targets[0].kind = "game"; });
 bad("rejects a role field", (d) => { d.targets[0].artifacts[0].role = "binary"; });
 bad("rejects a destination field", (d) => { d.targets[0].artifacts[0].destination = "/homebrews/"; });
 bad("rejects a path in a filename", (d) => { d.targets[0].artifacts[0].filename = "../evil.bin"; });
+
+// The device ships homebrews with spaces in their names, so a filename carries
+// them. Leading and trailing whitespace stays refused: a card keeps it and
+// nothing downstream would show it.
+const good = (name, mutate) => {
+  const doc = structuredClone(minimal);
+  mutate(doc);
+  expect(name, validate(doc, manifestSchema), true);
+};
+
+good("accepts a space in a filename", (d) => {
+  d.targets[0].artifacts[0].filename = "Super Mario World.bin";
+  d.targets[0].artifacts[0].url = "Super Mario World.bin";
+});
+bad("rejects a leading space in a filename", (d) => { d.targets[0].artifacts[0].filename = " smw.bin"; });
+bad("rejects a trailing space in a filename", (d) => { d.targets[0].artifacts[0].filename = "smw.bin "; });
 bad("rejects a short sha256", (d) => { d.targets[0].artifacts[0].sha256 = "abc"; });
 bad("rejects a missing tools key", (d) => { delete d.tools; });
 bad("rejects a future schemaVersion", (d) => { d.schemaVersion = 2; });
@@ -131,6 +147,16 @@ bad("rejects a subdirectory url", (d) => { d.targets[0].artifacts[0].url = "file
 const toolUrl = structuredClone(full);
 toolUrl.tools[0].binary.url = "https://evil.example/extractor.wasm";
 expect("rejects an absolute tool binary url", validate(toolUrl, manifestSchema), false);
+
+const docs = structuredClone(minimal);
+docs.docs = "https://github.com/slash-proc/mine-sweeper-retro-go-sd#readme";
+expect("accepts a docs link", validate(docs, manifestSchema), true);
+
+// `docs` is the only absolute URL a manifest may carry, and it is for a human
+// to read, never for an installer to fetch. Anything that is not https is a
+// scheme an installer might be tempted to follow.
+bad("rejects a non-https docs link", (d) => { d.docs = "http://example.com/"; });
+bad("rejects a docs filename", (d) => { d.docs = "README.md"; });
 
 const noEn = structuredClone(full);
 noEn.tools[0].title = { de: "Nur Deutsch" };
