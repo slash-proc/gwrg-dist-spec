@@ -32,6 +32,23 @@ Name it `<project>-<tag>-bundle.zip`, all lower case.
 same release. GitHub compares release asset names case-insensitively, so two
 that differ only in case cannot both be attached.
 
+## Where it is published
+
+Two places, and both matter.
+
+It is **built at release time and attached to the release**, so what a user
+downloads offline is what the project actually published rather than something
+a mirror assembled later.
+
+It is also **copied to the `dist/` root of the mirror**, beside `versions.json`
+and outside any tag directory. Without that copy a browser could not fetch it
+at all — [release assets are not CORS-readable](01-distribution.md#the-problem),
+which is the constraint the whole mirror exists to work around. The mirror job
+fetches the asset; it never builds one.
+
+A version entry's `bundle` field is therefore a filename resolved against
+`versions.json`, not against that version's manifest.
+
 ## Multi-version bundles
 
 An archivist may package a project's whole retained history. Put `versions.json`

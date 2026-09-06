@@ -42,13 +42,26 @@ The mirror is derived. Delete it and CI rebuilds it from the releases.
 
 ```
 https://{owner}.github.io/{repo}/dist/versions.json
+https://{owner}.github.io/{repo}/dist/game-v1.0.0-bundle.zip
 https://{owner}.github.io/{repo}/dist/v1.0.0/manifest.json
 https://{owner}.github.io/{repo}/dist/v1.0.0/game.bin
 https://{owner}.github.io/{repo}/dist/v1.0.0/extractor.wasm
+https://{owner}.github.io/{repo}/dist/v1.0.0/game_core.elf
 ```
 
 `dist/versions.json` is the only path a tool hard-codes. Everything else is
 reached by resolving relative URLs against the file that named them.
+
+**Offline bundles are mirrored too, at the `dist/` root.** A version entry's
+`bundle` is a filename resolved against `versions.json`, so it sits beside that
+file rather than inside the tag directory — which is also what stops a bundle
+being an entry in the very directory it archives.
+
+The mirror has to carry them for the same reason it carries everything else:
+[a release asset is not CORS-fetchable](#the-problem), so a bundle that existed
+only on the release would be one a browser could never download. The mirror job
+fetches it off the release rather than building it — see
+[offline bundles](06-bundle.md).
 
 The site root is left free for a human-facing page.
 
