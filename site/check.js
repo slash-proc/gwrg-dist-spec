@@ -158,6 +158,15 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     say(ERROR, `${tag}: index kind is not offered by any target`,
       `index says "${entry.kind}", targets offer ${[...kinds].join(", ")}`);
   }
+  // `originalSystem` says which console a homebrew's work came from, so a
+  // scraper can look it up in the right art library instead of searching by
+  // name. An emulator has no such provenance -- its system lives in
+  // `systems[]`, and a ROM's own folder already says which console it is.
+  if (manifest.originalSystem !== undefined && !kinds.has("homebrew")) {
+    say(WARN, `${tag}: originalSystem on a manifest with no homebrew target`,
+      "The field describes where a homebrew came from; an emulator declares systems[] instead");
+  }
+
   // "Must the user supply something?" -- a converter input or a BIOS both count.
   // Every emulator has `tools: []`, so counting only tool inputs would publish
   // false for a core that cannot run a game without a System Card. A
@@ -284,6 +293,12 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     for (const sym of target.symbols ?? []) {
       files.push({ what: `${target.id}/${sym.filename} (symbols)`, ...sym });
     }
+  }
+  // Full-size box art, published beside the manifest. Nothing installs it --
+  // it is there for a launcher or a catalogue that wants better art than the
+  // thumbnail the binary carries.
+  if (manifest.cover) {
+    files.push({ what: `${manifest.cover.filename} (cover)`, ...manifest.cover });
   }
   for (const tool of manifest.tools) {
     out.tools.push(tool);

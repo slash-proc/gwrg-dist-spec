@@ -3,6 +3,7 @@
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
+import { createHash } from "node:crypto";
 import { check } from "../site/check.js";
 
 const HASH_EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
@@ -306,6 +307,34 @@ set(emuIndex(), manifest({ targets: [missingSymbols] }));
 r = await check("owner/repo", opts);
 expect("catches an unpublished symbols file",
   errorsOf(r).some((e) => e.includes("core.elf")), errorsOf(r).join(" | "));
+
+// A full-size cover is published beside the manifest and verified like any
+// other declared file, but it is not installed on the device.
+const COVER = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+const coverHash = createHash("sha256").update(COVER).digest("hex");
+set(index(), manifest({ cover: {
+  filename: "cover.png", url: "cover.png", bytes: COVER.length,
+  sha256: coverHash, width: 800, height: 600,
+} }), { "/dist/v0.1.2/cover.png": COVER });
+r = await check("owner/repo", { ...opts, hash: true });
+expect("verifies a published cover", r.summary.conformant, errorsOf(r).join(" | "));
+expect("the cover is not part of the install set",
+  !r.versions[0].targets[0].installed.includes("cover.png"),
+  r.versions[0].targets[0].installed.join(", "));
+
+set(index(), manifest({ cover: {
+  filename: "cover.png", url: "cover.png", bytes: COVER.length, sha256: coverHash,
+} }));
+r = await check("owner/repo", opts);
+expect("catches an unpublished cover",
+  errorsOf(r).some((e) => e.includes("cover.png")), errorsOf(r).join(" | "));
+
+// Provenance belongs to a homebrew; an emulator says systems[] instead.
+set(emuIndex(), manifest({ targets: [emuTarget()], originalSystem: "snes" }));
+r = await check("owner/repo", opts);
+expect("warns about originalSystem on an emulator-only manifest",
+  r.checks.some((c) => c.level === "warn" && c.label.includes("originalSystem")),
+  r.checks.map((c) => `${c.level}:${c.label}`).join(" | "));
 
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");

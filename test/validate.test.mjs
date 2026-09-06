@@ -309,5 +309,33 @@ badEmu("rejects a BIOS with an unlocalised label",
     }];
   });
 
+// Provenance and full-size box art. Neither is installed; both are optional.
+const COVER = {
+  filename: "cover.png", url: "cover.png", bytes: 264091,
+  sha256: "b".repeat(64), width: 800, height: 600,
+};
+good("accepts originalSystem", (d) => { d.originalSystem = "snes"; });
+good("accepts a cover", (d) => { d.cover = structuredClone(COVER); });
+good("accepts a cover without dimensions", (d) => {
+  d.cover = structuredClone(COVER);
+  delete d.cover.width;
+  delete d.cover.height;
+});
+bad("rejects an originalSystem with a slash", (d) => { d.originalSystem = "roms/snes"; });
+// Same rule as every other published file: a plain name resolved beside the
+// manifest, never an origin the mirror does not control.
+bad("rejects an absolute cover url", (d) => {
+  d.cover = structuredClone(COVER);
+  d.cover.url = "https://evil.example/cover.png";
+});
+bad("rejects a cover with no hash", (d) => {
+  d.cover = structuredClone(COVER);
+  delete d.cover.sha256;
+});
+bad("rejects an unknown field on a cover", (d) => {
+  d.cover = structuredClone(COVER);
+  d.cover.format = "png";
+});
+
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

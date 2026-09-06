@@ -166,9 +166,57 @@ manifest — every `sha256` is 64 hex characters and the schema enforces it.
 | `project` | yes | Matches `versions.json` |
 | `title` | yes | Display name |
 | `docs` | no | Absolute `https://` URL. Where a human reads about this project |
+| `originalSystem` | no | The console this work came from. Homebrew only |
+| `cover` | no | Full-size box art, published beside the manifest |
 | `source` | yes | `repo`, `commit`, `ref` — what built this |
 | `tools` | yes | Converters. `[]` when none |
 | `targets` | yes | One per platform |
+
+## Provenance and cover art
+
+A homebrew is a native program under `/homebrews/`, so nothing about where it
+sits says which console it came from. An emulator has no such gap: a ROM lives
+under `roms/<system>/` and its core declares `systems[]`. That difference is
+the whole reason `originalSystem` exists.
+
+`originalSystem` names the console the work originated on — `snes` for a Super
+Mario World port, `pico8` for a PICO-8 game. It is a hint for anything that
+wants to look the title up in the right art library rather than searching blind
+by name, and it is equally useful for grouping or filtering. Use the same
+identifiers `systems[].id` uses, but note the value space is wider: a homebrew
+may come from a console no core emulates. Omit the field for an original work
+written for the Game & Watch itself, which came from nowhere else.
+
+Declaring it on a manifest with no `homebrew` target is a warning, not an
+error — an emulator states its systems in `systems[]`.
+
+| `cover` | Required | |
+|---|---|---|
+| `filename` | yes | Name of the file |
+| `url` | yes | A plain filename, resolved beside this manifest |
+| `bytes` | yes | Size |
+| `sha256` | yes | Of the file |
+| `width` | no | Pixels |
+| `height` | no | Pixels |
+
+`cover` is full-size box art — the source image, not the thumbnail. A packed
+homebrew can already embed a cover in its GWHB header, but that one is bounded
+by what the device can decode and cache: 186×100 and 10 KiB. A catalogue, a
+web installer or a launcher on a larger screen wants better than that, and the
+project usually has the original artwork sitting in its tree already.
+
+The two do not compete. The embedded thumbnail is what the device shows; the
+published cover is what everything else can use. A project may ship either,
+both, or neither.
+
+Prefer shipping art over relying on a lookup. Embedded or published, real
+artwork is exact and needs no network round-trip, where scraping by name is a
+guess that can return the wrong regional box art. `originalSystem` is the
+fallback for projects that ship no art of their own.
+
+Like every other published file, `cover.url` is a plain filename resolved
+beside the manifest, and it is mirrored and hash-checked the same way. It is
+never installed on the device.
 
 ## Targets
 

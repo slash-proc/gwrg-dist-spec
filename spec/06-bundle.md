@@ -21,7 +21,8 @@ works against zip entries as against a URL. A tool needs one new resolver, not
 a second format.
 
 Because a bundle is the whole directory, it also carries whatever else the
-manifest names — a converter's `.wasm`, and the debug symbols. That is the
+manifest names — a converter's `.wasm`, the debug symbols, and the cover. That
+is the
 point: a crash report is worth as much from an archived release as from a live
 one, and symbolicating it offline needs the ELF that shipped with those exact
 bytes.

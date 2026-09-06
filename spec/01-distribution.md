@@ -25,9 +25,10 @@ This fails only in a browser, and only cross-origin. Every local test passes.
 attached to a GitHub release, along with the `manifest.json` describing them and
 the offline bundle. That is the archival record.
 
-"Names", not "installs": debug symbols are named and published but never
-installed, and the mirror fetches them off the release like anything else. A
-file the manifest names and the release lacks is a broken deploy.
+"Names", not "installs": debug symbols and a full-size cover are named and
+published but never installed, and the mirror fetches them off the release like
+anything else. A file the manifest names and the release lacks is a broken
+deploy.
 
 The bundle is built at release time and attached, never assembled by the
 mirror, so what a user downloads offline is what the project published.
@@ -47,6 +48,7 @@ https://{owner}.github.io/{repo}/dist/v1.0.0/manifest.json
 https://{owner}.github.io/{repo}/dist/v1.0.0/game.bin
 https://{owner}.github.io/{repo}/dist/v1.0.0/extractor.wasm
 https://{owner}.github.io/{repo}/dist/v1.0.0/game_core.elf
+https://{owner}.github.io/{repo}/dist/v1.0.0/cover_src.png
 ```
 
 `dist/versions.json` is the only path a tool hard-codes. Everything else is
