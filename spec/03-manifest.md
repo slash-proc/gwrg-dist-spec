@@ -196,11 +196,14 @@ and has no launcher tab of its own.
 | `url` | yes | A plain filename, resolved beside this manifest |
 | `bytes` | yes | Size |
 | `sha256` | yes | Of the file |
-| `format` | yes | Currently `elf` |
 
 An ELF lets a tool turn a crash address into a function and a line, which turns
 "it froze" into a bug report somebody can act on. Every project already builds
 one; without a manifest entry no tool can find it.
+
+There is no `format`. The filename says what the file is, the same reason
+artifacts carry none — should a linker map ever be published beside the ELF,
+its extension distinguishes it.
 
 It is per-binary, so it belongs to a target rather than the manifest root: the
 symbols must describe the artifact delivered beside them. It is deliberately

@@ -212,7 +212,7 @@ const emulator = {
     artifacts: [{ filename: "gwenesis.bin", bytes: 262144, sha256: HASH, url: "gwenesis.bin" }],
     symbols: [{
       filename: "gwenesis_core.elf", url: "gwenesis_core.elf",
-      bytes: 1184032, sha256: HASH, format: "elf",
+      bytes: 1184032, sha256: HASH,
     }],
     systems: [{
       id: "md",
@@ -291,8 +291,11 @@ badEmu("rejects a system id with a slash",
   (d) => { d.targets[0].systems[0].id = "roms/md"; });
 badEmu("rejects an absolute symbols url",
   (d) => { d.targets[0].symbols[0].url = "https://evil.example/x.elf"; });
-badEmu("rejects an unknown symbols format",
-  (d) => { d.targets[0].symbols[0].format = "dwarf"; });
+// The field is gone, not loosened: additionalProperties keeps it out, so a
+// manifest still declaring the old `format: "elf"` is refused rather than
+// silently accepted. See ad8cd61, which made the same call for artifacts.
+badEmu("rejects a format field on symbols",
+  (d) => { d.targets[0].symbols[0].format = "elf"; });
 badEmu("rejects a BIOS filename list of one",
   (d) => {
     d.targets[0].systems[0].bios = [{

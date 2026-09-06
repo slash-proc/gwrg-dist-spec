@@ -288,7 +288,7 @@ expect("a required BIOS makes needsUserFiles true",
 // Symbols are fetched and verified like an artifact, but never installed.
 const withSymbols = emuTarget();
 withSymbols.symbols = [{
-  filename: "core.elf", url: "core.elf", bytes: 1, sha256: HASH_ONE, format: "elf",
+  filename: "core.elf", url: "core.elf", bytes: 1, sha256: HASH_ONE,
 }];
 set(emuIndex(), manifest({ targets: [withSymbols] }),
     { "/dist/v0.1.2/core.elf": Buffer.from([0]) });
@@ -300,7 +300,7 @@ expect("symbols are not part of the install set",
 
 const missingSymbols = emuTarget();
 missingSymbols.symbols = [{
-  filename: "core.elf", url: "core.elf", bytes: 1, sha256: HASH_ONE, format: "elf",
+  filename: "core.elf", url: "core.elf", bytes: 1, sha256: HASH_ONE,
 }];
 set(emuIndex(), manifest({ targets: [missingSymbols] }));
 r = await check("owner/repo", opts);

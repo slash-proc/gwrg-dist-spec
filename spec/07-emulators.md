@@ -226,7 +226,7 @@ Hashes and the commit are elided as `…`, the convention
       ],
       "symbols": [
         { "filename": "pce_core.elf", "bytes": 1184032, "sha256": "…",
-          "url": "pce_core.elf", "format": "elf" }
+          "url": "pce_core.elf" }
       ],
       "systems": [
         {

@@ -64,14 +64,13 @@
 
     "symbols": {
       "type": "object",
-      "required": ["filename", "url", "bytes", "sha256", "format"],
+      "required": ["filename", "url", "bytes", "sha256"],
       "additionalProperties": false,
       "properties": {
         "filename": { "$ref": "#/$defs/filename" },
         "url": { "$ref": "#/$defs/filename" },
         "bytes": { "type": "integer", "minimum": 1 },
-        "sha256": { "$ref": "#/$defs/sha256" },
-        "format": { "enum": ["elf"] }
+        "sha256": { "$ref": "#/$defs/sha256" }
       }
     },
 
