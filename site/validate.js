@@ -8,7 +8,8 @@
 const HANDLED = new Set([
   "$schema", "$id", "$defs", "title", "description",
   "type", "const", "enum", "required", "properties", "additionalProperties",
-  "propertyNames", "items", "minItems", "minLength", "pattern",
+  "propertyNames", "items", "minItems", "uniqueItems", "minLength", "pattern",
+  "minProperties",
   "minimum", "maximum", "format", "$ref", "anyOf",
 ]);
 
@@ -97,6 +98,14 @@ export function validate(instance, schema, root = schema, path = "") {
     if (schema.minItems !== undefined && instance.length < schema.minItems) {
       errors.push(`${at}: needs at least ${schema.minItems} item(s)`);
     }
+    if (schema.uniqueItems) {
+      // Scalars only, which is all the schema asks for. Deep equality would be
+      // a bigger promise than any field here needs.
+      const seen = instance.map((v) => JSON.stringify(v));
+      if (new Set(seen).size !== seen.length) {
+        errors.push(`${at}: items must be unique`);
+      }
+    }
     if (schema.items) {
       instance.forEach((item, i) => {
         errors.push(...validate(item, schema.items, root, `${at}[${i}]`));
@@ -107,6 +116,10 @@ export function validate(instance, schema, root = schema, path = "") {
   if (actual === "object") {
     for (const key of schema.required ?? []) {
       if (!(key in instance)) errors.push(`${at}: missing required "${key}"`);
+    }
+    if (schema.minProperties !== undefined
+        && Object.keys(instance).length < schema.minProperties) {
+      errors.push(`${at}: needs at least ${schema.minProperties} field(s)`);
     }
     if (schema.propertyNames?.pattern) {
       const re = new RegExp(schema.propertyNames.pattern);

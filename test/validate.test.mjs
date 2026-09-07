@@ -337,5 +337,25 @@ bad("rejects an unknown field on a cover", (d) => {
   d.cover.format = "png";
 });
 
+// Space and reach. Both optional; neither is a total anything else can
+// contradict.
+good("accepts a storage list", (d) => { d.storage = ["sd"]; });
+good("accepts both storage modes", (d) => { d.storage = ["sd", "flash"]; });
+bad("rejects an unknown storage mode", (d) => { d.storage = ["emmc"]; });
+bad("rejects an empty storage list", (d) => { d.storage = []; });
+bad("rejects a repeated storage mode", (d) => { d.storage = ["sd", "sd"]; });
+good("accepts runtime on a target", (d) => {
+  d.targets[0].runtime = { savestateBytes: 77824, saveBytes: 8192 };
+});
+// An empty object would say "I declare working space" while declaring none.
+bad("rejects an empty runtime", (d) => { d.targets[0].runtime = {}; });
+bad("rejects a zero savestate", (d) => {
+  d.targets[0].runtime = { savestateBytes: 0 };
+});
+// No total: a minimum an installer could derive is not the manifest's to state.
+bad("rejects a precomputed total", (d) => {
+  d.targets[0].runtime = { savestateBytes: 1, minimumBytes: 2 };
+});
+
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

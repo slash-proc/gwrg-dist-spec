@@ -168,6 +168,7 @@ manifest — every `sha256` is 64 hex characters and the schema enforces it.
 | `docs` | no | Absolute `https://` URL. Where a human reads about this project |
 | `originalSystem` | no | The console this work came from. Homebrew only |
 | `cover` | no | Full-size box art, published beside the manifest |
+| `storage` | no | Which installs this works on: `["sd"]`, `["flash"]`, or both |
 | `source` | yes | `repo`, `commit`, `ref` — what built this |
 | `tools` | yes | Converters. `[]` when none |
 | `targets` | yes | One per platform |
@@ -218,6 +219,72 @@ Like every other published file, `cover.url` is a plain filename resolved
 beside the manifest, and it is mirrored and hash-checked the same way. It is
 never installed on the device.
 
+## Space, and where it fits
+
+A tool that installs things has two questions to answer, and they are not the
+same question.
+
+**Will it fit?** Add up what the install occupies. Every installed file is an
+artifact with a `bytes`, so the fixed part of that sum is already exact and
+needs no new field. The variable part is a converter's output, bounded by
+`outputs[].maxBytes` — see below, because that bound has to be honest to be
+worth anything.
+
+**Will it work?** Space is not the only way an install fails. A project may
+use the SD card directly, or may be built to sit in internal flash, and a
+device that has the wrong one cannot run it however much room is free.
+`storage` says which installs a project supports:
+
+```json
+"storage": ["sd"]
+```
+
+Absent means both. `["sd"]` means an SD-modded device only; `["flash"]` means
+a flash-only install. This is a top-level statement about the project, not a
+per-target one — a project that grew a second build for the other install mode
+would publish two targets, and at that point the honest answer is to revisit
+this field rather than to have it disagree with itself.
+
+### Runtime working space
+
+`runtime` states what a thing needs *while running*, over and above the files
+it installs:
+
+| Field | Required | |
+|---|---|---|
+| `savestateBytes` | no | One savestate |
+| `saveBytes` | no | Save data — SRAM, a settings blob |
+
+It sits on a target for a homebrew and on a system for an emulator, because a
+savestate is the whole machine's state and an emulator's machine differs per
+system.
+
+This exists for the flash-only case. On a device with no SD card the user has
+to size a filesystem by hand, and getting it right means knowing how big a
+savestate is — an internal number nobody should have to learn to install a
+game.
+
+**There is deliberately no total.** The manifest publishes the parts and an
+installer adds up the ones that apply to what the user is actually installing.
+A precomputed "minimum free space" would be a derived number that can disagree
+with the fields it was derived from, and then nothing says which is right.
+
+### Honest ceilings
+
+`outputs[].maxBytes` is the largest a converter's output can be. It has two
+readers: a host refusing an implausible run, and anything working out whether
+the result will fit.
+
+Those two want the same number, but only if it is a real bound. A ceiling set
+to the wasm safety limit satisfies the first reader and is useless to the
+second: a bound of 64 MiB on an output that is never above 1.2 MiB says
+nothing at all. Compute it from what the converter can actually emit — a
+baseline plus the worst case of whatever the user can add — and round up.
+
+`limits.maxOutputBytes` stays the safety ceiling, and the two are allowed to
+differ. That is the point: one is what the module is permitted to write, the
+other is what it will ever want to.
+
 ## Targets
 
 | Field | Required | |
@@ -231,6 +298,7 @@ never installed on the device.
 | `uses` | no | Converters this target needs |
 | `symbols` | no | Debug symbols. Published, never installed |
 | `systems` | see below | Launcher tabs. Emulator cores only |
+| `runtime` | no | Working space this needs beyond its files |
 
 `systems[]` is required when `kind` is `emulator` and forbidden when `kind` is
 `homebrew` — see [emulator cores](07-emulators.md). A homebrew is one program

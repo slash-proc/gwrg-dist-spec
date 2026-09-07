@@ -12,6 +12,12 @@
     "docs": { "type": "string", "pattern": "^https://[^\\s]+$" },
     "originalSystem": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
     "cover": { "$ref": "#/$defs/cover" },
+    "storage": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["sd", "flash"] }
+    },
     "source": {
       "type": "object",
       "required": ["repo", "commit", "ref"],
@@ -60,7 +66,8 @@
         "artifacts": { "type": "array", "minItems": 0, "items": { "$ref": "#/$defs/artifact" } },
         "uses": { "type": "array", "items": { "$ref": "#/$defs/uses" } },
         "symbols": { "type": "array", "items": { "$ref": "#/$defs/symbols" } },
-        "systems": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/system" } }
+        "systems": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/system" } },
+        "runtime": { "$ref": "#/$defs/runtime" }
       }
     },
 
@@ -99,7 +106,8 @@
         "browse": { "enum": ["file", "directory"] },
         "compression": { "type": "boolean" },
         "cheatExt": { "type": "string", "pattern": "^[A-Za-z0-9]+$" },
-        "bios": { "type": "array", "items": { "$ref": "#/$defs/bios" } }
+        "bios": { "type": "array", "items": { "$ref": "#/$defs/bios" } },
+        "runtime": { "$ref": "#/$defs/runtime" }
       }
     },
 
@@ -134,6 +142,16 @@
         "bytes": { "type": "integer", "minimum": 0 },
         "sha256": { "$ref": "#/$defs/sha256" },
         "url": { "$ref": "#/$defs/filename" }
+      }
+    },
+
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "savestateBytes": { "type": "integer", "minimum": 1 },
+        "saveBytes": { "type": "integer", "minimum": 1 }
       }
     },
 
