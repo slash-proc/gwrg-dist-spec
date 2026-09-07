@@ -48,10 +48,40 @@ what to play is looking for "Game Boy Advance".
 | `browse` | yes | `file` or `directory` |
 | `compression` | yes | Boolean. See below |
 | `cheatExt` | no | No leading dot: `ggcodes`, `pceplus`, `mcf` |
+| `biosDir` | no | BIOS folder key, when it is not `id` |
 | `bios` | no | Files the user must supply that are not games |
 
 `systems[]` is required when `kind` is `emulator` and forbidden when `kind` is
 `homebrew`. A homebrew is one program; it has no launcher tab of its own.
+
+### The BIOS folder is not always the ROM folder
+
+`id` is the `roms/<id>/` key. BIOS files live under `bios/<key>/`, and the two
+keys usually match — `nes` and `msx` use the same word for both. Two do not:
+
+| System | ROM folder | BIOS folder |
+|---|---|---|
+| ColecoVision | `col` | `bios/coleco` |
+| PC Engine CD | `pcecd` | `bios/pce` |
+
+So a consumer cannot derive one from the other, and guessing `bios/<id>` puts
+a ColecoVision BIOS somewhere nothing will look for it.
+
+`biosDir` states the BIOS key when it differs. Omit it and the folder is `id`,
+which is the common case and stays uncluttered:
+
+```json
+{
+  "id": "pcecd",
+  "biosDir": "pce",
+  "bios": [ { "id": "syscard3", "filename": "syscard3.pce", "required": true } ]
+}
+```
+
+The PC Engine case shows why this is a per-system field rather than a per-file
+one: `pce` and `pcecd` are two systems from one core, sharing one BIOS folder.
+A path on each BIOS entry would repeat the same folder on every file and let
+two files in the same system disagree.
 
 ### The names are not localised
 

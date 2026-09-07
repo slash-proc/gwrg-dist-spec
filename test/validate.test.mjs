@@ -269,6 +269,12 @@ const badEmu = (name, mutate) => {
   expect(name, validate(doc, manifestSchema), false);
 };
 
+const goodEmu = (name, mutate) => {
+  const doc = structuredClone(emulator);
+  mutate(doc);
+  expect(name, validate(doc, manifestSchema), true);
+};
+
 // A group of one is a string written the long way, and two spellings of one
 // thing is how a schema starts drifting.
 badEmu("rejects a one-element extension group",
@@ -356,6 +362,13 @@ bad("rejects a zero savestate", (d) => {
 bad("rejects a precomputed total", (d) => {
   d.targets[0].runtime = { savestateBytes: 1, minimumBytes: 2 };
 });
+
+// The BIOS folder is a second key, not the ROM folder's: col vs bios/coleco.
+goodEmu("accepts a biosDir", (d) => { d.targets[0].systems[0].biosDir = "coleco"; });
+badEmu("rejects a biosDir with a slash", (d) => {
+  d.targets[0].systems[0].biosDir = "bios/coleco";
+});
+badEmu("rejects an uppercase biosDir", (d) => { d.targets[0].systems[0].biosDir = "Coleco"; });
 
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);
