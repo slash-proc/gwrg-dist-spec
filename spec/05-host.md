@@ -44,6 +44,16 @@ separators, no `..`, no control characters, length capped — and then:
 - **A publisher-declared name wins.** A derived name colliding with an
   `artifacts[]` entry, a fixed output, or another derived name is refused and
   shown to the user, never silently written.
+- **Compare names case-insensitively, and compare them within one directory.**
+  The card is FAT or exFAT, which case-folds: `Doom.whd` and `DOOM.whd` are one
+  file there and two in any ordinary map or set. A collision check that
+  distinguishes them passes in the tool and then overwrites on the card, which
+  is the failure this rule exists to prevent. Fold case before comparing.
+
+  The comparison is per destination directory, not across the whole install
+  set. A core's converted outputs land in `roms/<system id>/` and its artifacts
+  in the core directory, so those two cannot collide with each other; two files
+  headed for the same directory can, whatever produced them.
 - **A name that sanitises to nothing usable is an error the user resolves.**
   There is no canned fallback: two files that collide would still collide
   under one.

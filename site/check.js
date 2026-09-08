@@ -327,6 +327,47 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   if (manifest.cover) {
     files.push({ what: `${manifest.cover.filename} (cover)`, ...manifest.cover });
   }
+  // Two declared names that fold together are one file on the card. The card
+  // is FAT or exFAT and case-folds; we are not the ones writing to it, but a
+  // manifest that declares such a pair is broken before any host sees it.
+  // Grouped by where each file lands, because two different directories
+  // cannot collide.
+  for (const target of manifest.targets) {
+    const byDir = new Map();
+    const place = (dir, name, what) => {
+      if (!byDir.has(dir)) byDir.set(dir, new Map());
+      const seen = byDir.get(dir);
+      const key = name.toLowerCase();
+      if (seen.has(key)) {
+        say(ERROR, `${tag}: ${target.id} declares two files that are one file on the card`,
+          `${dir}: "${seen.get(key)}" and "${name}" differ only in case`);
+      } else {
+        seen.set(key, name);
+      }
+    };
+    const home = target.kind === "emulator" ? "cores/" : "homebrews/";
+    for (const a of target.artifacts ?? []) place(home, a.filename, "artifact");
+    for (const sys of target.systems ?? []) {
+      for (const b of sys.bios ?? []) {
+        const names = Array.isArray(b.filename) ? b.filename : [b.filename];
+        for (const n of names) place(`bios/${sys.biosDir ?? sys.id}/`, n, "bios");
+      }
+    }
+    // A fixed output installs beside the binary for a homebrew, and into the
+    // system's ROM folder for a core. A derived name is not knowable here.
+    for (const use of target.uses ?? []) {
+      const tool = manifest.tools.find((t) => t.id === use.tool);
+      for (const id of use.outputs ?? []) {
+        const out = (tool?.outputs ?? []).find((o) => o.id === id);
+        if (!out?.filename) continue;
+        const dir = target.kind === "emulator"
+          ? `roms/${use.system ?? (target.systems ?? [])[0]?.id}/`
+          : home;
+        place(dir, out.filename, "output");
+      }
+    }
+  }
+
   // Cross-field rules JSON Schema cannot state.
   for (const tool of manifest.tools) {
     for (const inp of tool.inputs ?? []) {

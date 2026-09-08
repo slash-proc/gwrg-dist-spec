@@ -416,6 +416,32 @@ r = await check("owner/repo", opts);
 expect("catches uses[].system naming a system the target lacks",
   errorsOf(r).some((e) => e.includes("does not declare")), errorsOf(r).join(" | "));
 
+// FAT and exFAT case-fold, so two declared names differing only in case are
+// one file once installed. We do not write to the card; we refuse to publish
+// a manifest that could not survive being written.
+const caseClash = manifest();
+caseClash.targets[0].artifacts = [
+  { filename: "MineSweeper.bin", bytes: 0, sha256: HASH_EMPTY, url: "MineSweeper.bin" },
+  { filename: "minesweeper.bin", bytes: 1, sha256: HASH_ONE, url: "minesweeper.bin" },
+];
+set(index(), caseClash);
+r = await check("owner/repo", opts);
+expect("catches two artifacts that fold to one filename",
+  errorsOf(r).some((e) => e.includes("differ only in case")), errorsOf(r).join(" | "));
+
+// Different directories cannot collide, however alike the names are.
+const sameNameElsewhere = emuTarget();
+sameNameElsewhere.artifacts = [
+  { filename: "core.bin", bytes: 0, sha256: HASH_EMPTY, url: "core.bin" },
+];
+sameNameElsewhere.systems[0].bios = [{
+  id: "b", filename: "CORE.BIN", required: false, label: { en: "B" },
+}];
+set(emuIndex(), manifest({ targets: [sameNameElsewhere] }));
+r = await check("owner/repo", opts);
+expect("does not confuse two directories",
+  !errorsOf(r).some((e) => e.includes("differ only in case")), errorsOf(r).join(" | "));
+
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);
