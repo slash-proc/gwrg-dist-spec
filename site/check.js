@@ -258,7 +258,12 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
       }
     }
 
+    // Names of everything that lands in the install set. A derived output has
+    // no name here on purpose -- it is decided per converted file at install
+    // time -- so it is counted but not named, or two derived outputs would
+    // look like two files called `undefined`.
     const installed = target.artifacts.map((a) => a.filename);
+    let derivedOutputs = 0;
 
     for (const use of target.uses ?? []) {
       const tool = manifest.tools.find((t) => t.id === use.tool);
@@ -270,13 +275,15 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
         const output = tool.outputs.find((o) => o.id === id);
         if (!output) {
           say(ERROR, `${tag}/${target.id}: tool "${use.tool}" has no output "${id}"`, "");
-        } else {
+        } else if (output.filename !== undefined) {
           installed.push(output.filename);
+        } else {
+          derivedOutputs += 1;
         }
       }
     }
 
-    if (installed.length === 0) {
+    if (installed.length === 0 && derivedOutputs === 0) {
       say(ERROR, `${tag}/${target.id}: installs nothing`,
         "a target needs at least one artifact or one used tool output");
     }

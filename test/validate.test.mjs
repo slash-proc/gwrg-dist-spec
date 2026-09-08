@@ -410,5 +410,27 @@ badEmu("rejects a uses system that is not a slug", (d) => {
   d.targets[0].uses = [{ tool: "t", outputs: ["o"], required: true, system: "roms/doom" }];
 });
 
+// Filenames follow the conventions ROM sets actually use, and are bounded by
+// what a FAT card refuses rather than by an alphabet we happened to pick.
+good("accepts parentheses in a filename", (d) => {
+  d.targets[0].artifacts[0].filename = "Doom (Shareware).whd";
+  d.targets[0].artifacts[0].url = "Doom (Shareware).whd";
+});
+good("accepts brackets, commas and apostrophes", (d) => {
+  d.targets[0].artifacts[0].filename = "Kirby's Adventure [!], v1.bin";
+  d.targets[0].artifacts[0].url = "Kirby's Adventure [!], v1.bin";
+});
+for (const [why, name] of [
+  ["a colon", "bad:name.bin"], ["a pipe", "pipe|name.bin"],
+  ["a quote", 'qu"ote.bin'], ["a backslash", "back\\slash.bin"],
+  ["a leading dot", ".hidden"], ["a leading space", " lead.bin"],
+  ["a trailing dot", "trailing."], ["a trailing space", "trailing "],
+]) {
+  bad(`rejects ${why} in a filename`, (d) => { d.targets[0].artifacts[0].filename = name; });
+}
+bad("rejects a filename over 200 characters", (d) => {
+  d.targets[0].artifacts[0].filename = "a".repeat(201) + ".bin";
+});
+
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

@@ -173,6 +173,22 @@ manifest — every `sha256` is 64 hex characters and the schema enforces it.
 | `tools` | yes | Converters. `[]` when none |
 | `targets` | yes | One per platform |
 
+## What a filename may contain
+
+Anything a FAT or exFAT card will hold, which is most things. Ruled out are the
+characters those filesystems refuse — `" * / : < > ? \ |` — control
+characters, a leading or trailing space or dot, and anything over 200
+characters.
+
+Everything else is allowed on purpose, because the names people actually use
+carry punctuation: `Doom (Shareware).whd`, `Kirby's Adventure.whd`,
+`Legend of Zelda, The - A Link to the Past (USA).whd`. A whitelist of letters,
+digits and three symbols reads tidy in a schema and then rejects the No-Intro
+and GoodTools conventions every variant name follows.
+
+The exclusions are not stylistic. A separator would let a name escape its
+directory, and the rest are what the destination filesystem cannot store.
+
 ## Provenance and cover art
 
 A homebrew is a native program under `/homebrews/`, so nothing about where it

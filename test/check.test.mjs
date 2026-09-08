@@ -442,6 +442,35 @@ r = await check("owner/repo", opts);
 expect("does not confuse two directories",
   !errorsOf(r).some((e) => e.includes("differ only in case")), errorsOf(r).join(" | "));
 
+// Two derived outputs have no names here; they must not look like two files
+// called `undefined`.
+const twoDerived = manifest();
+twoDerived.tools = [{
+  id: "conv", processor: { type: "wasm", version: 1 }, title: { en: "Conv" },
+  binary: { file: "c.wasm", url: "c.wasm", bytes: 1, sha256: HASH_ONE },
+  limits: { maxMemoryPages: 1, maxOutputBytes: 1 },
+  inputs: [{ id: "src", required: true, allowMultiple: true, runPerFile: true,
+             extensions: [".wad"], maxBytes: 1 }],
+  outputs: [{ id: "a", extension: ".whd", maxBytes: 1 },
+            { id: "b", extension: ".dat", maxBytes: 1 }],
+}];
+twoDerived.targets[0].uses = [{ tool: "conv", outputs: ["a", "b"], required: true }];
+set(index(), twoDerived);
+r = await check("owner/repo", opts);
+expect("two derived outputs are not a duplicate-name collision",
+  !errorsOf(r).some((e) => e.includes("undefined") || e.includes("differ only in case")),
+  errorsOf(r).join(" | "));
+
+// A target whose only install is a derived output still installs something.
+const derivedOnly = manifest();
+derivedOnly.tools = twoDerived.tools;
+derivedOnly.targets[0].artifacts = [];
+derivedOnly.targets[0].uses = [{ tool: "conv", outputs: ["a"], required: true }];
+set(index(), derivedOnly);
+r = await check("owner/repo", opts);
+expect("a derived output counts as installing something",
+  !errorsOf(r).some((e) => e.includes("installs nothing")), errorsOf(r).join(" | "));
+
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

@@ -8,7 +8,7 @@
 const HANDLED = new Set([
   "$schema", "$id", "$defs", "title", "description",
   "type", "const", "enum", "required", "properties", "additionalProperties",
-  "propertyNames", "items", "minItems", "uniqueItems", "minLength", "pattern",
+  "propertyNames", "items", "minItems", "uniqueItems", "minLength", "maxLength", "pattern",
   "minProperties", "dependentRequired",
   "minimum", "maximum", "format", "$ref", "anyOf", "oneOf",
 ]);
@@ -92,6 +92,9 @@ export function validate(instance, schema, root = schema, path = "") {
     }
     if (schema.minLength !== undefined && instance.length < schema.minLength) {
       errors.push(`${at}: shorter than ${schema.minLength}`);
+    }
+    if (schema.maxLength !== undefined && instance.length > schema.maxLength) {
+      errors.push(`${at}: longer than ${schema.maxLength}`);
     }
   }
 

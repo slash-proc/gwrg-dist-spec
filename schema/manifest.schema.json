@@ -40,7 +40,8 @@
     },
     "filename": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 ._-]*[A-Za-z0-9._-])?$"
+      "maxLength": 200,
+      "pattern": "^[^\\u0000-\\u001f\"*/:<>?\\\\|. ](?:[^\\u0000-\\u001f\"*/:<>?\\\\|]*[^\\u0000-\\u001f\"*/:<>?\\\\|. ])?$"
     },
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "requiresAbi": {
