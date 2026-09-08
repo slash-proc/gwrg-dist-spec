@@ -9,7 +9,7 @@ const HANDLED = new Set([
   "$schema", "$id", "$defs", "title", "description",
   "type", "const", "enum", "required", "properties", "additionalProperties",
   "propertyNames", "items", "minItems", "uniqueItems", "minLength", "pattern",
-  "minProperties",
+  "minProperties", "dependentRequired",
   "minimum", "maximum", "format", "$ref", "anyOf",
 ]);
 
@@ -116,6 +116,14 @@ export function validate(instance, schema, root = schema, path = "") {
   if (actual === "object") {
     for (const key of schema.required ?? []) {
       if (!(key in instance)) errors.push(`${at}: missing required "${key}"`);
+    }
+    for (const [key, needed] of Object.entries(schema.dependentRequired ?? {})) {
+      if (!(key in instance)) continue;
+      for (const dep of needed) {
+        if (!(dep in instance)) {
+          errors.push(`${at}: "${key}" requires "${dep}"`);
+        }
+      }
     }
     if (schema.minProperties !== undefined
         && Object.keys(instance).length < schema.minProperties) {

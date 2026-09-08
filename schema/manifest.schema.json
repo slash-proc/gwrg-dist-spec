@@ -129,8 +129,13 @@
         "bytes": { "type": "integer", "minimum": 1 },
         "sha1": { "type": "string", "pattern": "^[0-9a-fA-F]{40}$" },
         "strict": { "type": "boolean" },
+        "url": { "$ref": "#/$defs/filename" },
+        "sha256": { "$ref": "#/$defs/sha256" },
         "label": { "$ref": "#/$defs/localised" },
         "description": { "$ref": "#/$defs/localised" }
+      },
+      "dependentRequired": {
+        "url": ["bytes", "sha256"]
       }
     },
 

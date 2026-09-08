@@ -336,6 +336,32 @@ expect("warns about originalSystem on an emulator-only manifest",
   r.checks.some((c) => c.level === "warn" && c.label.includes("originalSystem")),
   r.checks.map((c) => `${c.level}:${c.label}`).join(" | "));
 
+// A BIOS the project ships is fetched and verified like any other named file,
+// and asks nothing of the user.
+const BIOSBYTES = Buffer.from([1, 2, 3, 4]);
+const biosHash = createHash("sha256").update(BIOSBYTES).digest("hex");
+const shipped = emuTarget();
+shipped.systems[0].bios = [{
+  id: "msx1", filename: "MSX.rom", required: true, label: { en: "MSX BIOS" },
+  url: "MSX.rom", bytes: BIOSBYTES.length, sha256: biosHash,
+}];
+set({ ...emuIndex(), versions: emuIndex().versions.map((v) => ({ ...v, needsUserFiles: false })) },
+    manifest({ targets: [shipped] }), { "/dist/v0.1.2/MSX.rom": BIOSBYTES });
+r = await check("owner/repo", { ...opts, hash: true });
+expect("a shipped BIOS is verified and needs nothing from the user",
+  r.summary.conformant, errorsOf(r).join(" | "));
+
+const missingBios = emuTarget();
+missingBios.systems[0].bios = [{
+  id: "msx1", filename: "MSX.rom", required: true, label: { en: "MSX BIOS" },
+  url: "MSX.rom", bytes: 4, sha256: biosHash,
+}];
+set({ ...emuIndex(), versions: emuIndex().versions.map((v) => ({ ...v, needsUserFiles: false })) },
+    manifest({ targets: [missingBios] }));
+r = await check("owner/repo", opts);
+expect("catches an unpublished BIOS the manifest claims to ship",
+  errorsOf(r).some((e) => e.includes("MSX.rom")), errorsOf(r).join(" | "));
+
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

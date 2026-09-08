@@ -49,7 +49,7 @@ what to play is looking for "Game Boy Advance".
 | `compression` | yes | Boolean. See below |
 | `cheatExt` | no | No leading dot: `ggcodes`, `pceplus`, `mcf` |
 | `biosDir` | no | BIOS folder key, when it is not `id` |
-| `bios` | no | Files the user must supply that are not games |
+| `bios` | no | Files that are not games. Supplied by the user, or shipped |
 
 `systems[]` is required when `kind` is `emulator` and forbidden when `kind` is
 `homebrew`. A homebrew is one program; it has no launcher tab of its own.
@@ -67,6 +67,24 @@ keys usually match — `nes` and `msx` use the same word for both. Two do not:
 So a consumer cannot derive one from the other, and guessing `bios/<id>` puts
 a ColecoVision BIOS somewhere nothing will look for it.
 
+### Where a BIOS file goes
+
+A BIOS file installs to:
+
+```
+/bios/<biosDir or id>/<filename>
+```
+
+Nothing declares that path. It is derived from two things the manifest already
+states: that the entry is a `bios[]` entry, and the system's folder key. A
+`bios[]` entry cannot install anywhere else, so a per-file destination would be
+a field with one legal value — and `destination` was removed from artifacts for
+exactly that reason.
+
+So `syscard3.pce` on a system with `"id": "pcecd", "biosDir": "pce"` installs
+to `/bios/pce/syscard3.pce`, and an MSX ROM on `"id": "msx"` installs to
+`/bios/msx/MSX.rom`.
+
 `biosDir` states the BIOS key when it differs. Omit it and the folder is `id`,
 which is the common case and stays uncluttered:
 
@@ -77,6 +95,37 @@ which is the common case and stays uncluttered:
   "bios": [ { "id": "syscard3", "filename": "syscard3.pce", "required": true } ]
 }
 ```
+
+### A project may ship a BIOS itself
+
+Not every BIOS file is something the user has to find. blueMSX's ten MSX ROMs
+are freely distributable and vendored in the core's own tree; asking a user to
+supply them would send them hunting for files the project already has.
+
+A `bios[]` entry that carries `url`, `bytes` and `sha256` **is published by
+this project**, beside the manifest, mirrored and hash-checked like every other
+named file. One without them is the user's to supply. That single distinction
+replaces a "who provides this" flag, because the answer is simply whether a
+file was published or not:
+
+```json
+{
+  "id": "msx1",
+  "filename": "MSX.rom",
+  "required": true,
+  "url": "MSX.rom",
+  "bytes": 32768,
+  "sha256": "…"
+}
+```
+
+`url` may not appear without `bytes` and `sha256`: a published file with no
+hash is a file a consumer cannot verify.
+
+This also settles what `needsUserFiles` counts. A required BIOS the project
+ships needs nothing from the user, so it does not make `needsUserFiles` true —
+otherwise every MSX install would warn about files it was about to install
+itself.
 
 The PC Engine case shows why this is a per-system field rather than a per-file
 one: `pce` and `pcecd` are two systems from one core, sharing one BIOS folder.

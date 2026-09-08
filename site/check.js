@@ -172,9 +172,12 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   // false for a core that cannot run a game without a System Card. A
   // conditionally required BIOS (`requiredFor`) counts too: the picker's job is
   // to warn that files may be needed, not to predict which games get played.
+  // A BIOS the project publishes itself (it carries a url) is installed from
+  // the release like any other file, so it asks nothing of the user.
   const needsBios = manifest.targets.some((t) =>
     (t.systems ?? []).some((sys) =>
-      (sys.bios ?? []).some((b) => b.required === true || (b.requiredFor ?? []).length > 0)));
+      (sys.bios ?? []).some((b) =>
+        !b.url && (b.required === true || (b.requiredFor ?? []).length > 0))));
   const needsFiles = manifest.tools.some((t) => t.inputs.some((i) => i.required)) || needsBios;
   if (entry.needsUserFiles !== undefined && entry.needsUserFiles !== needsFiles) {
     say(ERROR, `${tag}: needsUserFiles disagrees with the manifest`,
@@ -289,6 +292,14 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   const files = [];
   for (const target of manifest.targets) {
     for (const a of target.artifacts) files.push({ what: `${target.id}/${a.filename}`, ...a });
+    // A BIOS the project ships is a published file: it installs to
+    // /bios/<biosDir or id>/, which is derived, never declared.
+    for (const sys of target.systems ?? []) {
+      for (const b of sys.bios ?? []) {
+        if (!b.url) continue;
+        files.push({ what: `${sys.id}/${b.url} (bios)`, ...b, filename: b.url });
+      }
+    }
     // Published and hashed like an artifact, but never installed.
     for (const sym of target.symbols ?? []) {
       files.push({ what: `${target.id}/${sym.filename} (symbols)`, ...sym });
