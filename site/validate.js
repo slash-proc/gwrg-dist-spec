@@ -10,7 +10,7 @@ const HANDLED = new Set([
   "type", "const", "enum", "required", "properties", "additionalProperties",
   "propertyNames", "items", "minItems", "uniqueItems", "minLength", "pattern",
   "minProperties", "dependentRequired",
-  "minimum", "maximum", "format", "$ref", "anyOf",
+  "minimum", "maximum", "format", "$ref", "anyOf", "oneOf",
 ]);
 
 function typeOf(v) {
@@ -56,6 +56,16 @@ export function validate(instance, schema, root = schema, path = "") {
   // filename (one accepted name or several). Expressing that in the published
   // schema rather than in our own checker is the point -- a third party
   // validating with Ajv has to be able to reject a malformed one too.
+  // Exactly one branch must match. Used where two fields are alternatives
+  // rather than options: an output names itself or derives its name, never
+  // both and never neither.
+  if (schema.oneOf) {
+    const matched = schema.oneOf.filter((sub) => validate(instance, sub, root, path).length === 0);
+    if (matched.length !== 1) {
+      errors.push(`${at}: must match exactly one of the alternatives, matched ${matched.length}`);
+    }
+  }
+
   if (schema.anyOf) {
     const attempts = schema.anyOf.map((sub) => validate(instance, sub, root, path));
     if (!attempts.some((errs) => errs.length === 0)) {

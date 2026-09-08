@@ -71,12 +71,12 @@ full.tools = [{
   options: [],
   inputs: [
     {
-      id: "base", required: true, repeatable: false, label: { en: "Zelda 3 ROM (USA)" },
+      id: "base", required: true, allowMultiple: false, label: { en: "Zelda 3 ROM (USA)" },
       extensions: [".sfc", ".smc"], maxBytes: 4194304,
       variants: [{ id: "us", sha1: "6D4F10A8B10E10DBE624CB23CF03B88BB8252973", bytes: 1048576 }],
     },
     {
-      id: "language", required: false, repeatable: true, label: { en: "Translated ROM" },
+      id: "language", required: false, allowMultiple: true, label: { en: "Translated ROM" },
       extensions: [".sfc"], maxBytes: 4194304,
       variants: [{ id: "de", sha1: "2E62494967FB0AFDF5DA1635607F9641DF7C6559" }],
     },
@@ -369,6 +369,46 @@ badEmu("rejects a biosDir with a slash", (d) => {
   d.targets[0].systems[0].biosDir = "bios/coleco";
 });
 badEmu("rejects an uppercase biosDir", (d) => { d.targets[0].systems[0].biosDir = "Coleco"; });
+
+const goodTool = (name, mutate) => {
+  const doc = structuredClone(full);
+  mutate(doc);
+  expect(name, validate(doc, manifestSchema), true);
+};
+const badTool = (name, mutate) => {
+  const doc = structuredClone(full);
+  mutate(doc);
+  expect(name, validate(doc, manifestSchema), false);
+};
+
+// A converter that turns a library of files into a library of files.
+goodTool("accepts a derived output name", (d) => {
+  d.tools[0].inputs[0].allowMultiple = true;
+  d.tools[0].inputs[0].runPerFile = true;
+  d.tools[0].inputs[0].maxCount = 32;
+  d.tools[0].outputs[0] = { id: "whd", extension: ".whd", maxBytes: 25165824 };
+});
+goodTool("accepts a canonical filename on a variant", (d) => {
+  d.tools[0].inputs[0].variants = [{ id: "doom2", sha1: "a".repeat(40), filename: "Doom II.whd" }];
+});
+// filename and extension are alternatives, not options.
+badTool("rejects an output with both filename and extension", (d) => {
+  d.tools[0].outputs[0].extension = ".whd";
+});
+badTool("rejects an output with neither", (d) => {
+  delete d.tools[0].outputs[0].filename;
+});
+badTool("rejects an extension with no leading dot", (d) => {
+  delete d.tools[0].outputs[0].filename;
+  d.tools[0].outputs[0].extension = "whd";
+});
+// A core with several systems must say which one a converter feeds.
+goodEmu("accepts uses[].system", (d) => {
+  d.targets[0].uses = [{ tool: "t", outputs: ["o"], required: true, system: d.targets[0].systems[0].id }];
+});
+badEmu("rejects a uses system that is not a slug", (d) => {
+  d.targets[0].uses = [{ tool: "t", outputs: ["o"], required: true, system: "roms/doom" }];
+});
 
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

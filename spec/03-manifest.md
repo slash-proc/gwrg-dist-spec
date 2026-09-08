@@ -108,7 +108,7 @@ manifest — every `sha256` is 64 hex characters and the schema enforces it.
         {
           "id": "base",
           "required": true,
-          "repeatable": false,
+          "allowMultiple": false,
           "label": { "en": "Zelda 3 ROM (USA)" },
           "extensions": [".sfc", ".smc"],
           "maxBytes": 4194304,
@@ -120,7 +120,7 @@ manifest — every `sha256` is 64 hex characters and the schema enforces it.
         {
           "id": "language",
           "required": false,
-          "repeatable": true,
+          "allowMultiple": true,
           "label": { "en": "Translated ROM (optional)" },
           "extensions": [".sfc", ".smc"],
           "maxBytes": 4194304,
@@ -340,6 +340,38 @@ Within that directory the firmware picks out the file the launcher starts by
 its `.bin` extension. Everything else in the install set is installed
 alongside it.
 
+**A converter's output is placed by what it is, not by where the project
+lives.** A homebrew's converted assets sit beside its binary, because that is
+what the homebrew loads at run time. A core is different: what its converter
+produces is a *game*, and games live where the launcher browses for them.
+
+| The project is | Its converter's output installs to |
+|---|---|
+| `kind: homebrew` | beside the binary, as the rest of the install set |
+| `kind: emulator` | `roms/<system id>/` |
+
+Nothing declares this. A core already states its systems, and a `.whd` produced
+from a WAD is a Doom ROM whether or not it arrived converted — so it belongs in
+the same folder as one the user supplied ready-made, and the launcher lists
+both without knowing which was which.
+
+A core that declares one system needs to say nothing more. A core with several
+must say which one a tool's output belongs to, in `uses[]`:
+
+```json
+"uses": [{ "tool": "doom-whd", "outputs": ["whd"], "required": true,
+           "system": "doom" }]
+```
+
+Required only when the core declares more than one system, for the same reason
+`biosDir` is only stated when it differs from the ROM folder: say the thing
+that cannot be worked out, and nothing else.
+
+An output extension may also be one the system accepts directly. Doom takes
+`.whd` files, and a user who already has one installs it as a ROM with no
+conversion at all — the converter is how you *get* one, not a toll on having
+one.
+
 ### Artifacts
 
 | Field | Required | |
@@ -389,7 +421,9 @@ ceilings a host rejects it against.
 |---|---|---|
 | `id` | yes | Role name, e.g. `base`, `language` |
 | `required` | yes | Boolean |
-| `repeatable` | yes | May the user supply more than one |
+| `allowMultiple` | yes | May the user supply more than one file |
+| `runPerFile` | no | Convert each file separately. Requires `allowMultiple` |
+| `maxCount` | no | Ceiling on how many files this slot accepts |
 | `label` | no | Localised. Omit when the title says enough |
 | `description` | no | Localised. What this file is and where a user gets it |
 | `extensions` | yes | For the file picker. A hint, never a check |
@@ -424,19 +458,67 @@ option bit meaning "accept a stranger", which put the decision in two places
 and let a manifest and a module disagree about it. One boolean, enforced in one
 place, cannot.
 
+### One run, or one run per file
+
+Two different things can be true of a slot that takes several files, and they
+are not variants of each other:
+
+- **`allowMultiple`** — the slot accepts more than one file. Zelda 3 takes a
+  base ROM plus any number of translated ROMs, and they all feed **one** run
+  that produces **one** asset pack.
+- **`runPerFile`** — each file is converted **separately**, one run each. Doom
+  takes a library of WADs and produces one `.whd` per WAD.
+
+`runPerFile` requires `allowMultiple`; a slot that takes one file has nothing
+to iterate. `maxCount` caps how many files the slot accepts, and a host checks
+it *before* running rather than discovering it afterwards — unbounded runs are
+the one genuinely open-ended thing in this model.
+
+The axis lives on the input because the input is what multiplies. The number
+of outputs follows from it and is not stated separately.
+
 ### Outputs
 
 | Field | Required | |
 |---|---|---|
-| `id` | yes | Referenced by `uses[].outputs` |
-| `filename` | yes | Name on the card |
-| `maxBytes` | yes | Ceiling |
+| `id` | yes | Referenced by `uses[].outputs`, and what the module emits |
+| `filename` | either | Fixed name on the card |
+| `extension` | either | Name comes from the input, with this extension |
+| `maxBytes` | yes | Ceiling, per produced file |
 | `label` | no | Localised. A name for the file a user just produced |
 | `description` | no | Localised. What it is for |
 
-A module names its own outputs at runtime. Those names are checked against this
-list. The manifest decides what a legitimate run produces; the module does not
-get to name its own destination.
+Exactly one of `filename` and `extension`. A converter that always produces the
+same file names it; one that converts a library derives each name from the file
+it converted. Presence carries the meaning, so there is no boolean:
+
+```json
+{ "id": "assets", "filename": "smw_assets.dat", "maxBytes": 16777216 }
+{ "id": "whd",    "extension": ".whd",          "maxBytes": 25165824 }
+```
+
+**A module labels its outputs; the manifest and the host decide their names.**
+The module emits an `id`, which is checked against this list. It has no say in
+any filename — not even a proposed one — which is a smaller attack surface than
+having the host defensively validate a name the module chose.
+
+#### How a derived name is resolved
+
+1. The matched variant's `filename`, when the input was recognised and declares
+   one. This is how a known IWAD becomes `Doom II.whd` rather than `DOOM2.whd`.
+2. Otherwise the input file's own name, stem kept, extension **replaced** with
+   the output's declared `extension`. `MYHACK.WAD` becomes `MYHACK.whd`, never
+   `MYHACK.WAD.whd`.
+
+The extension is always the declared one. A user's file cannot bring its own
+extension into the install set, which is what stops a WAD named `doom.bin`
+landing where the core binary goes.
+
+A publisher-declared name always wins: a derived name that collides with an
+artifact, with a fixed output, or with another derived name is refused and
+shown to the user. A name that sanitises to nothing usable is an error the
+user resolves, never a silent fallback — there is no canned name, because two
+files that collide would still collide under one.
 
 ## Rules the schema does not state
 

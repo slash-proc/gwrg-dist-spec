@@ -121,7 +121,7 @@ produced.tools = [{
   binary: { file: "patch.wasm", bytes: 1, sha256: HASH_ONE, url: "patch.wasm" },
   limits: { maxMemoryPages: 256, maxOutputBytes: 1048576 },
   inputs: [{
-    id: "rom", required: true, repeatable: false,
+    id: "rom", required: true, allowMultiple: false,
     label: { en: "ROM" }, extensions: [".bin"], maxBytes: 1048576,
   }],
   outputs: [{ id: "bin", filename: "minesweeper.bin", maxBytes: 1048576 }],
@@ -361,6 +361,60 @@ set({ ...emuIndex(), versions: emuIndex().versions.map((v) => ({ ...v, needsUser
 r = await check("owner/repo", opts);
 expect("catches an unpublished BIOS the manifest claims to ship",
   errorsOf(r).some((e) => e.includes("MSX.rom")), errorsOf(r).join(" | "));
+
+// Cross-field rules the schema cannot state.
+const toolManifest = (mutate) => {
+  const m = manifest();
+  m.tools = [{
+    id: "conv", processor: { type: "wasm", version: 1 }, title: { en: "Conv" },
+    binary: { file: "c.wasm", url: "c.wasm", bytes: 1, sha256: HASH_ONE },
+    limits: { maxMemoryPages: 1, maxOutputBytes: 1 },
+    inputs: [{ id: "wad", required: true, allowMultiple: true, extensions: [".wad"], maxBytes: 1 }],
+    outputs: [{ id: "whd", filename: "out.whd", maxBytes: 1 }],
+  }];
+  mutate(m.tools[0]);
+  return m;
+};
+
+set(index(), toolManifest((t) => { t.inputs[0].allowMultiple = false; t.inputs[0].runPerFile = true; }));
+r = await check("owner/repo", opts);
+expect("catches runPerFile without allowMultiple",
+  errorsOf(r).some((e) => e.includes("takes only one")), errorsOf(r).join(" | "));
+
+set(index(), toolManifest((t) => {
+  t.inputs[0].runPerFile = true;
+  t.outputs[0] = { id: "whd", extension: ".whd", maxBytes: 1 };
+}));
+r = await check("owner/repo", opts);
+expect("accepts a per-file converter with a derived name",
+  !errorsOf(r).some((e) => e.includes("derives an output name")), errorsOf(r).join(" | "));
+
+set(index(), toolManifest((t) => { t.outputs[0] = { id: "whd", extension: ".whd", maxBytes: 1 }; }));
+r = await check("owner/repo", opts);
+expect("catches a derived name with no per-file input",
+  errorsOf(r).some((e) => e.includes("derives an output name")), errorsOf(r).join(" | "));
+
+set(index(), toolManifest((t) => { t.inputs[0].runPerFile = true; }));
+r = await check("owner/repo", opts);
+expect("warns when every run would write the same filename",
+  r.checks.some((c) => c.level === "warn" && c.label.includes("names every output itself")),
+  r.checks.filter((c) => c.level === "warn").map((c) => c.label).join(" | "));
+
+// A core with two systems must say which one a converter's output belongs to.
+const twoSystems = emuTarget();
+twoSystems.systems = [twoSystems.systems[0], { ...twoSystems.systems[0], id: "gbc" }];
+twoSystems.uses = [{ tool: "conv", outputs: ["whd"], required: true }];
+set(emuIndex(), manifest({ targets: [twoSystems] }));
+r = await check("owner/repo", opts);
+expect("catches a multi-system core not saying which system a tool feeds",
+  errorsOf(r).some((e) => e.includes("which system")), errorsOf(r).join(" | "));
+
+const badSystem = emuTarget();
+badSystem.uses = [{ tool: "conv", outputs: ["whd"], required: true, system: "nope" }];
+set(emuIndex(), manifest({ targets: [badSystem] }));
+r = await check("owner/repo", opts);
+expect("catches uses[].system naming a system the target lacks",
+  errorsOf(r).some((e) => e.includes("does not declare")), errorsOf(r).join(" | "));
 
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");

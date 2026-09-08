@@ -122,7 +122,7 @@ function renderVersion(v) {
       const li = el("li");
       li.append(el("strong", null, i.label?.en ?? i.id));
       li.append(el("span", "tag", i.required ? "required" : "optional"));
-      if (i.repeatable) li.append(el("span", "tag", "repeatable"));
+      if (i.allowMultiple) li.append(el("span", "tag", i.runPerFile ? "one run per file" : "multiple"));
       li.append(el("span", "muted",
         `${i.extensions.join(" ")} · ${(i.variants ?? []).length} known variant(s)`));
       inputs.append(li);

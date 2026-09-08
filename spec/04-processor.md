@@ -42,7 +42,7 @@ stage_name_ptr(i: u32) -> u32         UTF-8 name of stage i
 stage_name_len(i: u32) -> u32
 
 output_count() -> u32                 files produced
-output_name_ptr(i: u32) -> u32        UTF-8 name of output i
+output_name_ptr(i: u32) -> u32        UTF-8 id of output i, from outputs[]
 output_name_len(i: u32) -> u32
 output_ptr(i: u32) -> u32             bytes of output i
 output_len(i: u32) -> u32
@@ -52,6 +52,18 @@ error_len() -> u32
 warnings_ptr() -> u32                 newline-separated, may be empty
 warnings_len() -> u32
 ```
+
+**A module labels its outputs, it does not name them.** `output_name_*` is the
+`id` of an entry in `tools[].outputs[]`, not a filename. The host resolves the
+name — from the manifest for a fixed output, from the converted file for a
+derived one — so a module cannot propose a path, an extension, or a name that
+collides with anything already on the card.
+
+The ABI is unchanged by this: same exports, same semantics, same string. Only
+what the string means changed, and it means something the host was already
+checking against `outputs[]`.
+
+
 
 Every export is fixed by the ABI version. A `wasm`/`1` module has exactly
 these. The manifest does not list them; a host re-derives them from the binary

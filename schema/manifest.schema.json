@@ -182,7 +182,8 @@
       "properties": {
         "tool": { "type": "string", "minLength": 1 },
         "outputs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-        "required": { "type": "boolean" }
+        "required": { "type": "boolean" },
+        "system": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
       }
     },
 
@@ -242,12 +243,14 @@
 
     "input": {
       "type": "object",
-      "required": ["id", "required", "repeatable", "extensions", "maxBytes"],
+      "required": ["id", "required", "allowMultiple", "extensions", "maxBytes"],
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "required": { "type": "boolean" },
-        "repeatable": { "type": "boolean" },
+        "allowMultiple": { "type": "boolean" },
+        "runPerFile": { "type": "boolean" },
+        "maxCount": { "type": "integer", "minimum": 1 },
         "label": { "$ref": "#/$defs/localised" },
         "description": { "$ref": "#/$defs/localised" },
         "extensions": { "type": "array", "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" } },
@@ -265,17 +268,23 @@
         "id": { "type": "string", "minLength": 1 },
         "label": { "$ref": "#/$defs/localised" },
         "sha1": { "type": "string", "pattern": "^[0-9a-fA-F]{40}$" },
-        "bytes": { "type": "integer", "minimum": 1 }
+        "bytes": { "type": "integer", "minimum": 1 },
+        "filename": { "$ref": "#/$defs/filename" }
       }
     },
 
     "output": {
       "type": "object",
-      "required": ["id", "filename", "maxBytes"],
+      "required": ["id", "maxBytes"],
+      "oneOf": [
+        { "required": ["filename"] },
+        { "required": ["extension"] }
+      ],
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "filename": { "$ref": "#/$defs/filename" },
+        "extension": { "$ref": "#/$defs/extension" },
         "maxBytes": { "type": "integer", "minimum": 1 },
         "label": { "$ref": "#/$defs/localised" },
         "description": { "$ref": "#/$defs/localised" }

@@ -167,6 +167,22 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
       "The field describes where a homebrew came from; an emulator declares systems[] instead");
   }
 
+  // Where a core's converter output goes is derived from the system it belongs
+  // to, so with more than one system the manifest has to say which.
+  for (const target of manifest.targets) {
+    const ids = (target.systems ?? []).map((s) => s.id);
+    for (const use of target.uses ?? []) {
+      if (use.system !== undefined && !ids.includes(use.system)) {
+        say(ERROR, `${tag}: ${target.id} uses ${use.tool} for system "${use.system}", which it does not declare`,
+          ids.length ? `declares ${ids.join(", ")}` : "declares no systems");
+      }
+      if (use.system === undefined && ids.length > 1) {
+        say(ERROR, `${tag}: ${target.id} uses ${use.tool} but does not say which system its output belongs to`,
+          `declares ${ids.join(", ")}`);
+      }
+    }
+  }
+
   // "Must the user supply something?" -- a converter input or a BIOS both count.
   // Every emulator has `tools: []`, so counting only tool inputs would publish
   // false for a core that cannot run a game without a System Card. A
@@ -311,7 +327,30 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   if (manifest.cover) {
     files.push({ what: `${manifest.cover.filename} (cover)`, ...manifest.cover });
   }
+  // Cross-field rules JSON Schema cannot state.
   for (const tool of manifest.tools) {
+    for (const inp of tool.inputs ?? []) {
+      if (inp.runPerFile && !inp.allowMultiple) {
+        say(ERROR, `${tag}: ${tool.id}/${inp.id} converts each file but takes only one`,
+          "runPerFile needs allowMultiple: a single-file slot has nothing to iterate");
+      }
+      if (inp.maxCount !== undefined && !inp.allowMultiple) {
+        say(ERROR, `${tag}: ${tool.id}/${inp.id} caps a count it cannot have`,
+          "maxCount without allowMultiple");
+      }
+    }
+    // A derived name comes from the file being converted, so exactly one input
+    // has to be the thing being iterated.
+    const perFile = (tool.inputs ?? []).filter((i) => i.runPerFile);
+    const derived = (tool.outputs ?? []).filter((o) => o.extension !== undefined);
+    if (derived.length && perFile.length !== 1) {
+      say(ERROR, `${tag}: ${tool.id} derives an output name from no single input`,
+        `${derived.length} derived output(s), ${perFile.length} input(s) with runPerFile`);
+    }
+    if (!derived.length && perFile.length) {
+      say(WARN, `${tag}: ${tool.id} converts each file but names every output itself`,
+        "Every run would write the same filename, so only the last survives");
+    }
     out.tools.push(tool);
     files.push({ what: `${tool.id}/${tool.binary.file}`, ...tool.binary, filename: tool.binary.file });
   }

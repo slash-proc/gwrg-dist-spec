@@ -30,9 +30,33 @@ detaches every `ArrayBuffer` captured beforehand. A view taken before `alloc`
 is unusable after it.
 
 **Treat module strings as text, never markup or paths.** Insert messages with
-`textContent`. Rendering them as HTML is XSS in your own origin. Validate
-output names against a strict pattern — plain file name, no separators, no
-`..`, no control characters — *and* against `tools[].outputs[]`.
+`textContent`. Rendering them as HTML is XSS in your own origin. A module's
+output string is an `id`: match it against `tools[].outputs[]` and refuse
+anything unrecognised.
+
+**Resolve names yourself, and force the declared extension.** For an output
+declaring `filename`, that is the name. For one declaring `extension`, take the
+matched variant's `filename` if it has one, otherwise the converted file's own
+stem with the declared extension **replacing** whatever it had. Validate the
+result the way you would any name from outside — plain file name, no
+separators, no `..`, no control characters, length capped — and then:
+
+- **A publisher-declared name wins.** A derived name colliding with an
+  `artifacts[]` entry, a fixed output, or another derived name is refused and
+  shown to the user, never silently written.
+- **A name that sanitises to nothing usable is an error the user resolves.**
+  There is no canned fallback: two files that collide would still collide
+  under one.
+
+Forcing the extension is the load-bearing rule. The install set is a flat
+directory, so a user-supplied stem entering it is untrusted input — a WAD named
+`doom.bin` must never land where a core binary goes.
+
+**Run a converter once per file when the input says `runPerFile`.** Check
+`maxCount` before running, not after: the run count is otherwise the one
+unbounded quantity in the model. Accumulate the produced files across runs
+rather than replacing them, and place each by the rule for the project's kind —
+beside the binary for a homebrew, in `roms/<system id>/` for a core.
 
 **Run it in a Worker with a timeout.** The ABI has no cancellation flag and
 cannot have one. Terminating the Worker is the only way to stop a run and the
