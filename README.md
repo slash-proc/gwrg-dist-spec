@@ -83,8 +83,10 @@ whole project over an old version.
 Draft. The spec is written alongside its implementations, and every field in it
 exists because a real project needed it.
 
-Twenty-three projects publish under it today — six homebrew and seventeen
-cores — and every one is checked against the conformance checker.
+Twenty-four projects publish under it today — seven homebrew and seventeen
+cores. The newest release of every one is conformant against the checker;
+releases superseded by a later one keep whatever the spec said when they were
+cut, and are knowingly left that way.
 
 | Project | Shape | State |
 |---|---|---|
@@ -94,16 +96,19 @@ cores — and every one is checked against the conformance checker.
 | [pong-retro-go-sd](https://github.com/slash-proc/pong-retro-go-sd) | no converter, no cover art | published |
 | [smw-retro-go-sd](https://github.com/slash-proc/smw-retro-go-sd) | one converter, one input | published |
 | [zelda3-retro-go-sd](https://github.com/slash-proc/zelda3-retro-go-sd) | one converter, many files into one asset pack | published |
+| [openlara-retro-go-sd](https://github.com/slash-proc/openlara-retro-go-sd) | one converter, one run per file, `dataDir` | published |
 
 The cores are pce-go, gba, gwenesis, lynx, snes, tgb-dual, SMSPlusGX, PokeMini,
 potator, fceumm, caprice32, stella2014, prosystem, LCD-Game-Emulator, blueMSX,
 tama and doom.
 
-Between them they exercise the shapes the core half was designed for: one
-binary serving four launcher tabs, two systems from one binary, a system whose
-game is a `.cue` and its tracks, a BIOS folder that is not the ROM folder, a
-BIOS the project ships and one the user supplies, a required sidecar beside the
-core, and a core that emulates nothing at all.
+Between them they exercise the shapes the model was designed for: one binary
+serving four launcher tabs, two systems from one binary, a system whose game is
+a `.cue` and its tracks, a BIOS folder that is not the ROM folder, a BIOS the
+project ships and one the user supplies, a required sidecar beside the core, a
+core that emulates nothing at all, a converter that turns one file into one
+file and another that turns a shelf of them into a shelf of them, and a
+homebrew whose data lives in a folder of its own.
 
 Breaking changes are still expected: nothing here is public yet, and the
 spec is worth more correct than stable.

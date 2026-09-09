@@ -225,12 +225,12 @@ set(emuIndex(), manifest({ targets: [emuTarget()] }));
 r = await check("owner/repo", opts);
 expect("a conformant core passes", r.summary.conformant, errorsOf(r).join(" | "));
 
-// kind says emulator, nothing says which systems.
+// kind says core, nothing says which systems.
 const noSystems = emuTarget();
 delete noSystems.systems;
 set(emuIndex(), manifest({ targets: [noSystems] }));
 r = await check("owner/repo", opts);
-expect("catches an emulator with no systems",
+expect("catches a core with no systems",
   errorsOf(r).some((e) => e.includes("declares no systems")), errorsOf(r).join(" | "));
 
 // systems[] belongs to a core; a homebrew is one program.
@@ -329,10 +329,10 @@ r = await check("owner/repo", opts);
 expect("catches an unpublished cover",
   errorsOf(r).some((e) => e.includes("cover.png")), errorsOf(r).join(" | "));
 
-// Provenance belongs to a homebrew; an emulator says systems[] instead.
+// Provenance belongs to a homebrew; a core says systems[] instead.
 set(emuIndex(), manifest({ targets: [emuTarget()], originalSystem: "snes" }));
 r = await check("owner/repo", opts);
-expect("warns about originalSystem on an emulator-only manifest",
+expect("warns about originalSystem on a core-only manifest",
   r.checks.some((c) => c.level === "warn" && c.label.includes("originalSystem")),
   r.checks.map((c) => `${c.level}:${c.label}`).join(" | "));
 
