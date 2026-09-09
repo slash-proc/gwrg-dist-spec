@@ -400,6 +400,30 @@ expect("warns when every run would write the same filename",
   r.checks.some((c) => c.level === "warn" && c.label.includes("names every output itself")),
   r.checks.filter((c) => c.level === "warn").map((c) => c.label).join(" | "));
 
+set(index(), toolManifest((t) => {
+  t.inputs[0].runPerFile = true;
+  t.outputs = [
+    { id: "pkd", extension: ".pkd", maxBytes: 1 },
+    { id: "title", filename: "TITLE.SCR", maxBytes: 1 },
+  ];
+}));
+r = await check("owner/repo", opts);
+expect("catches a per-file tool that also writes a fixed name",
+  errorsOf(r).some((e) => e.includes("TITLE.SCR")), errorsOf(r).join(" | "));
+
+set(index(), toolManifest((t) => {
+  t.inputs[0].runPerFile = true;
+  t.outputs = [{ id: "pkd", extension: ".pkd", maxBytes: 1 }];
+}));
+r = await check("owner/repo", opts);
+expect("accepts a per-file tool whose outputs are all derived",
+  !errorsOf(r).some((e) => e.includes("once per converted file")), errorsOf(r).join(" | "));
+
+set(index(), toolManifest(() => {}));
+r = await check("owner/repo", opts);
+expect("accepts a one-run tool whose outputs are all fixed",
+  !errorsOf(r).some((e) => e.includes("once per converted file")), errorsOf(r).join(" | "));
+
 // A core with two systems must say which one a converter's output belongs to.
 const twoSystems = emuTarget();
 twoSystems.systems = [twoSystems.systems[0], { ...twoSystems.systems[0], id: "gbc" }];

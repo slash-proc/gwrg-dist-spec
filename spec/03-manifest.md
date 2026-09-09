@@ -522,6 +522,20 @@ the one genuinely open-ended thing in this model.
 The axis lives on the input because the input is what multiplies. The number
 of outputs follows from it and is not stated separately.
 
+The two shapes do not mix within one tool. A `runPerFile` input means the tool
+runs once for every file supplied; an output with a fixed `filename` is written
+on each of those runs, under the same name every time, so the second level
+converted collides with the first — the manifest is a collision with itself,
+and a host that refuses colliding names will refuse to install it. A tool
+therefore either runs per file or runs once.
+
+A project that needs both shapes declares two tools. OpenLara is the case: one
+tool converts each `.PHD` into its own `.PKD`, and a second produces the
+`TITLE.SCR` and `TRACKS.AD4` that exist once no matter how many levels were
+converted. The two entries in `tools[]` may point at the same wasm binary with
+different ids; what they must not do is ask one run to be both. Forcing a
+single module to handle unrelated jobs is a bad time for whoever writes it.
+
 ### Outputs
 
 | Field | Required | |

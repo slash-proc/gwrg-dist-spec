@@ -419,6 +419,14 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
       say(ERROR, `${tag}: ${tool.id} derives an output name from no single input`,
         `${derived.length} derived output(s), ${perFile.length} input(s) with runPerFile`);
     }
+    // A fixed name is written once per run. A per-file tool runs once per
+    // supplied file, so the second run collides with the first.
+    if (perFile.length && derived.length) {
+      for (const o of (tool.outputs ?? []).filter((o) => o.filename !== undefined)) {
+        say(ERROR, `${tag}: ${tool.id} writes ${o.filename} once per converted file`,
+          "A tool either runs per file or runs once. Split it into two tools, which may share one binary");
+      }
+    }
     if (!derived.length && perFile.length) {
       say(WARN, `${tag}: ${tool.id} converts each file but names every output itself`,
         "Every run would write the same filename, so only the last survives");
