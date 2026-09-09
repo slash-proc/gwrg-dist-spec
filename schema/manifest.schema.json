@@ -62,7 +62,7 @@
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "platform": { "type": "string", "minLength": 1 },
         "label": { "type": "string", "minLength": 1 },
-        "kind": { "enum": ["homebrew", "emulator"] },
+        "kind": { "enum": ["homebrew", "core"] },
         "requiresAbi": { "$ref": "#/$defs/requiresAbi" },
         "artifacts": { "type": "array", "minItems": 0, "items": { "$ref": "#/$defs/artifact" } },
         "uses": { "type": "array", "items": { "$ref": "#/$defs/uses" } },

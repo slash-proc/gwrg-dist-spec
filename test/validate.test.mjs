@@ -195,9 +195,9 @@ const noEn = structuredClone(full);
 noEn.tools[0].title = { de: "Nur Deutsch" };
 expect("rejects a localised object without en", validate(noEn, manifestSchema), false);
 
-// --- emulator cores ---------------------------------------------------------
+// --- cores ---------------------------------------------------------
 
-const emulator = {
+const core = {
   schemaVersion: 1,
   project: "gwenesis",
   title: "Gwenesis",
@@ -207,7 +207,7 @@ const emulator = {
     id: "gnw-retro-go",
     platform: "game-and-watch",
     label: "Game & Watch (Retro-Go SD)",
-    kind: "emulator",
+    kind: "core",
     requiresAbi: { version: 2, minSize: 840 },
     artifacts: [{ filename: "gwenesis.bin", bytes: 262144, sha256: HASH, url: "gwenesis.bin" }],
     symbols: [{
@@ -224,10 +224,10 @@ const emulator = {
     }],
   }],
 };
-expect("emulator with one system", validate(emulator, manifestSchema), true);
+expect("core with one system", validate(core, manifestSchema), true);
 
 // One binary, several launcher tabs, a grouped extension and a BIOS.
-const multi = structuredClone(emulator);
+const multi = structuredClone(core);
 multi.project = "pce";
 multi.targets[0].systems = [
   {
@@ -249,10 +249,10 @@ multi.targets[0].systems = [
     }],
   },
 ];
-expect("emulator with several systems, a group and a BIOS", validate(multi, manifestSchema), true);
+expect("core with several systems, a group and a BIOS", validate(multi, manifestSchema), true);
 
 // A BIOS that only some of the system's extensions need.
-const byExt = structuredClone(emulator);
+const byExt = structuredClone(core);
 byExt.targets[0].systems[0].bios = [{
   id: "disksys", filename: "disksys.rom", requiredFor: [".fds"],
   bytes: 8192, sha1: "5".repeat(40), strict: true,
@@ -264,13 +264,13 @@ expect("a BIOS required by extension", validate(byExt, manifestSchema), true);
 expect("homebrew without systems", validate(minimal, manifestSchema), true);
 
 const badEmu = (name, mutate) => {
-  const doc = structuredClone(emulator);
+  const doc = structuredClone(core);
   mutate(doc);
   expect(name, validate(doc, manifestSchema), false);
 };
 
 const goodEmu = (name, mutate) => {
-  const doc = structuredClone(emulator);
+  const doc = structuredClone(core);
   mutate(doc);
   expect(name, validate(doc, manifestSchema), true);
 };

@@ -76,7 +76,7 @@
         "kind": {
           "enum": [
             "homebrew",
-            "emulator"
+            "core"
           ]
         },
         "requiresAbi": {

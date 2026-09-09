@@ -1,6 +1,6 @@
 # GWRG distribution spec
 
-How a project publishes a Game & Watch Retro-Go homebrew or emulator core so a
+How a project publishes a Game & Watch Retro-Go homebrew or core so a
 web tool can install it from nothing but the repo URL.
 
 A user pastes `https://github.com/owner/repo`. The tool reads one file, learns
@@ -17,7 +17,7 @@ an SD card. No coordination with the tool's authors is required.
 | [`manifest.json`](spec/03-manifest.md) | One version: its files and its converter |
 | [Processor ABI](spec/04-processor.md) | How a converter is called |
 | [Offline bundles](spec/06-bundle.md) | Installing without a network |
-| [Emulator cores](spec/07-emulators.md) | The systems a core provides |
+| [Cores](spec/07-cores.md) | The systems a core provides |
 
 Tool authors also read [host requirements](spec/05-host.md), which are
 mandatory, not advisory.
@@ -35,9 +35,9 @@ dist/v1.0.0/game.bin
 That is a complete implementation. Converters are only needed when the user
 must supply their own ROM.
 
-An emulator core publishes the same three, and its manifest adds `systems[]` —
+A core publishes the same three, and its manifest adds `systems[]` —
 the launcher tabs the binary provides, read out of the packed core rather than
-written by hand. See [emulator cores](spec/07-emulators.md).
+written by hand. See [cores](spec/07-cores.md).
 
 ## Conformance checker
 
@@ -83,23 +83,27 @@ whole project over an old version.
 Draft. The spec is written alongside its implementations, and every field in it
 exists because a real project needed it.
 
-Four homebrew projects publish under it today, all conformant against the
-checker:
+Twenty-three projects publish under it today — six homebrew and seventeen
+cores — and every one is checked against the conformance checker.
 
 | Project | Shape | State |
 |---|---|---|
-| [mine-sweeper-retro-go-sd](https://github.com/slash-proc/mine-sweeper-retro-go-sd) | no converter | published, v0.1.3 |
-| [snake-retro-go-sd](https://github.com/slash-proc/snake-retro-go-sd) | no converter | published, v1.0.1 |
-| [smw-retro-go-sd](https://github.com/slash-proc/smw-retro-go-sd) | one converter, one input | published, v0.3.0 |
-| [zelda3-retro-go-sd](https://github.com/slash-proc/zelda3-retro-go-sd) | one converter, many files into one asset pack | published, v0.3.0 |
+| [mine-sweeper-retro-go-sd](https://github.com/slash-proc/mine-sweeper-retro-go-sd) | no converter | published |
+| [snake-retro-go-sd](https://github.com/slash-proc/snake-retro-go-sd) | no converter | published |
+| [ccleste-retro-go-sd](https://github.com/slash-proc/ccleste-retro-go-sd) | no converter, `originalSystem` | published |
+| [pong-retro-go-sd](https://github.com/slash-proc/pong-retro-go-sd) | no converter, no cover art | published |
+| [smw-retro-go-sd](https://github.com/slash-proc/smw-retro-go-sd) | one converter, one input | published |
+| [zelda3-retro-go-sd](https://github.com/slash-proc/zelda3-retro-go-sd) | one converter, many files into one asset pack | published |
 
-Seven emulator cores are prepared and none has been released yet: pce-go, gba,
-gwenesis, lynx and snes were already ported and now emit manifests; blueMSX and
-tama have just been converted from the project template.
+The cores are pce-go, gba, gwenesis, lynx, snes, tgb-dual, SMSPlusGX, PokeMini,
+potator, fceumm, caprice32, stella2014, prosystem, LCD-Game-Emulator, blueMSX,
+tama and doom.
 
-Between them they exercise the shapes the emulator half was designed for — one
-binary serving four launcher tabs, a system whose game is a `.cue` and its
-tracks, a required BIOS, an optional one, and a required sidecar beside the
-core.
+Between them they exercise the shapes the core half was designed for: one
+binary serving four launcher tabs, two systems from one binary, a system whose
+game is a `.cue` and its tracks, a BIOS folder that is not the ROM folder, a
+BIOS the project ships and one the user supplies, a required sidecar beside the
+core, and a core that emulates nothing at all.
 
-Breaking changes are expected until the first cores ship.
+Breaking changes are still expected: nothing here is public yet, and the
+spec is worth more correct than stable.

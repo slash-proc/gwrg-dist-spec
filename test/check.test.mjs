@@ -203,14 +203,14 @@ r = await check("owner/repo", opts);
 expect("catches out-of-order versions",
   errorsOf(r).some((e) => e.includes("newest first")), errorsOf(r).join(" | "));
 
-// --- emulator rules the schema cannot state -------------------------------
+// --- core rules the schema cannot state -------------------------------
 //
 // These live in check.js because site/validate.js implements only the keywords
 // the schemas use, and if/then plus oneOf is a lot of machinery for two rules.
 
 const emuTarget = () => ({
   id: "gnw-retro-go", platform: "game-and-watch",
-  label: "Game & Watch (Retro-Go SD)", kind: "emulator",
+  label: "Game & Watch (Retro-Go SD)", kind: "core",
   requiresAbi: { version: 2, minSize: 840 },
   artifacts: [{ filename: "MineSweeper.bin", bytes: 0, sha256: HASH_EMPTY, url: "MineSweeper.bin" }],
   systems: [{
@@ -218,12 +218,12 @@ const emuTarget = () => ({
     extensions: [".md", ".gen"], browse: "file", compression: false,
   }],
 });
-const emuIndex = () => index({ versions: [{ ...index().versions[0], kind: "emulator",
+const emuIndex = () => index({ versions: [{ ...index().versions[0], kind: "core",
   requiresAbi: { version: 2, minSize: 840 } }] });
 
 set(emuIndex(), manifest({ targets: [emuTarget()] }));
 r = await check("owner/repo", opts);
-expect("a conformant emulator passes", r.summary.conformant, errorsOf(r).join(" | "));
+expect("a conformant core passes", r.summary.conformant, errorsOf(r).join(" | "));
 
 // kind says emulator, nothing says which systems.
 const noSystems = emuTarget();

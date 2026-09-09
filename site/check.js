@@ -160,11 +160,11 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   }
   // `originalSystem` says which console a homebrew's work came from, so a
   // scraper can look it up in the right art library instead of searching by
-  // name. An emulator has no such provenance -- its system lives in
+  // name. A core has no such provenance -- its system lives in
   // `systems[]`, and a ROM's own folder already says which console it is.
   if (manifest.originalSystem !== undefined && !kinds.has("homebrew")) {
     say(WARN, `${tag}: originalSystem on a manifest with no homebrew target`,
-      "The field describes where a homebrew came from; an emulator declares systems[] instead");
+      "The field describes where a homebrew came from; a core declares systems[] instead");
   }
 
   // Where a core's converter output goes is derived from the system it belongs
@@ -184,7 +184,7 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   }
 
   // "Must the user supply something?" -- a converter input or a BIOS both count.
-  // Every emulator has `tools: []`, so counting only tool inputs would publish
+  // Most cores have `tools: []`, so counting only tool inputs would publish
   // false for a core that cannot run a game without a System Card. A
   // conditionally required BIOS (`requiredFor`) counts too: the picker's job is
   // to warn that files may be needed, not to predict which games get played.
@@ -217,14 +217,14 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     // JSON Schema could say these with if/then and oneOf; site/validate.js
     // deliberately implements only the keywords the schemas use, and a
     // conditional keyword set is a lot of machinery for two rules. They live
-    // here instead, and spec/07-emulators.md says so.
-    if (target.kind === "emulator" && !(target.systems ?? []).length) {
-      say(ERROR, `${tag}/${target.id}: an emulator declares no systems`,
-        "kind is emulator, so systems[] must list at least one launcher tab");
+    // here instead, and spec/07-cores.md says so.
+    if (target.kind === "core" && !(target.systems ?? []).length) {
+      say(ERROR, `${tag}/${target.id}: a core declares no systems`,
+        "kind is core, so systems[] must list at least one launcher tab");
     }
     if (target.kind === "homebrew" && target.systems !== undefined) {
       say(ERROR, `${tag}/${target.id}: a homebrew declares systems`,
-        "systems[] belongs to an emulator core; a homebrew is one program");
+        "systems[] belongs to a core; a homebrew is one program");
     }
 
     const sysIds = (target.systems ?? []).map((sys) => sys.id);
@@ -352,7 +352,7 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
         seen.set(key, name);
       }
     };
-    const home = target.kind === "emulator" ? "cores/" : "homebrews/";
+    const home = target.kind === "core" ? "cores/" : "homebrews/";
     for (const a of target.artifacts ?? []) place(home, a.filename, "artifact");
     for (const sys of target.systems ?? []) {
       for (const b of sys.bios ?? []) {
@@ -367,7 +367,7 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
       for (const id of use.outputs ?? []) {
         const out = (tool?.outputs ?? []).find((o) => o.id === id);
         if (!out?.filename) continue;
-        const dir = target.kind === "emulator"
+        const dir = target.kind === "core"
           ? `roms/${use.system ?? (target.systems ?? [])[0]?.id}/`
           : home;
         place(dir, out.filename, "output");

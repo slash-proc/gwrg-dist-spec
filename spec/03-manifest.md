@@ -192,7 +192,7 @@ directory, and the rest are what the destination filesystem cannot store.
 ## Provenance and cover art
 
 A homebrew is a native program under `/homebrews/`, so nothing about where it
-sits says which console it came from. An emulator has no such gap: a ROM lives
+sits says which console it came from. A core has no such gap: a ROM lives
 under `roms/<system>/` and its core declares `systems[]`. That difference is
 the whole reason `originalSystem` exists.
 
@@ -205,7 +205,7 @@ may come from a console no core emulates. Omit the field for an original work
 written for the Game & Watch itself, which came from nowhere else.
 
 Declaring it on a manifest with no `homebrew` target is a warning, not an
-error — an emulator states its systems in `systems[]`.
+error — a core states its systems in `systems[]`.
 
 | `cover` | Required | |
 |---|---|---|
@@ -271,8 +271,8 @@ it installs:
 | `savestateBytes` | no | One savestate |
 | `saveBytes` | no | Save data — SRAM, a settings blob |
 
-It sits on a target for a homebrew and on a system for an emulator, because a
-savestate is the whole machine's state and an emulator's machine differs per
+It sits on a target for a homebrew and on a system for a core, because a
+savestate is the whole machine's state and an emulated machine differs per
 system.
 
 This exists for the flash-only case. On a device with no SD card the user has
@@ -308,16 +308,16 @@ other is what it will ever want to.
 | `id` | yes | Stable slug, e.g. `gnw-retro-go` |
 | `platform` | yes | Device family |
 | `label` | yes | Plain string. Not localised — platform names are proper nouns |
-| `kind` | yes | `homebrew` or `emulator` |
+| `kind` | yes | `homebrew` or `core` |
 | `requiresAbi` | yes | Firmware ABI needed. Advisory when the binary is produced |
 | `artifacts` | yes | Compiled files. May be empty if the binary is produced |
 | `uses` | no | Converters this target needs |
 | `symbols` | no | Debug symbols. Published, never installed |
-| `systems` | see below | Launcher tabs. Emulator cores only |
+| `systems` | see below | Launcher tabs. Cores only |
 | `runtime` | no | Working space this needs beyond its files |
 
-`systems[]` is required when `kind` is `emulator` and forbidden when `kind` is
-`homebrew` — see [emulator cores](07-emulators.md). A homebrew is one program
+`systems[]` is required when `kind` is `core` and forbidden when `kind` is
+`homebrew` — see [cores](07-cores.md). A homebrew is one program
 and has no launcher tab of its own.
 
 ### Symbols
@@ -349,7 +349,7 @@ installed decides that, and the layout changes between firmware versions.
 
 A project says only:
 
-- `kind` — whether this is a homebrew or an emulator core. The installer maps
+- `kind` — whether this is a homebrew or a core. The installer maps
   that to a directory.
 
 Within that directory the firmware picks out the file the launcher starts by
@@ -364,7 +364,7 @@ produces is a *game*, and games live where the launcher browses for them.
 | The project is | Its converter's output installs to |
 |---|---|
 | `kind: homebrew` | beside the binary, as the rest of the install set |
-| `kind: emulator` | `roms/<system id>/` |
+| `kind: core` | `roms/<system id>/` |
 
 Nothing declares this. A core already states its systems, and a `.whd` produced
 from a WAD is a Doom ROM whether or not it arrived converted — so it belongs in
@@ -554,7 +554,7 @@ accept a document that breaks them.
 - **`project` matches `versions.json`.** The index and the manifest are
   generated separately and must describe the same project.
 
-[Emulator cores](07-emulators.md) add a few more of their own.
+[Cores](07-cores.md) add a few more of their own.
 
 ## Localisation
 
@@ -564,7 +564,7 @@ A tool falls back to `en` for any locale it has no entry for.
 Localised: `tools[].title`, `tools[].inputs[].label`,
 `tools[].inputs[].description`, `tools[].inputs[].variants[].label`,
 `tools[].options[].label`, `tools[].outputs[].label`,
-`tools[].outputs[].description`, and on an emulator core
+`tools[].outputs[].description`, and on a core
 `targets[].systems[].bios[].label` and `.description`.
 
 A manifest carries this copy so that every installer says the same thing. An
@@ -575,7 +575,7 @@ project cannot correct it without waiting for that consumer to ship.
 
 Not localised: platform labels, filenames, ids, and a system's `longName` and
 `shortName` — console names differ by region rather than language, which
-[emulator cores](07-emulators.md) explains.
+[cores](07-cores.md) explains.
 
 ## URLs
 

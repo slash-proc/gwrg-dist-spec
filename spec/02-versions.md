@@ -51,7 +51,7 @@ Real, not illustrative — this is the head of
 | `manifest` | yes | URL, relative to this file |
 | `publishedAt` | yes | RFC 3339 |
 | `prerelease` | yes | Boolean |
-| `kind` | yes | `homebrew` or `emulator` |
+| `kind` | yes | `homebrew` or `core` |
 | `requiresAbi` | yes | Firmware ABI this build needs |
 | `needsUserFiles` | yes | True if the user must supply a file — see below |
 | `bundle` | no | Filename of an [offline bundle](06-bundle.md) for this version |
@@ -71,7 +71,7 @@ the first 210 entries" say the same thing.
 system declares a required BIOS**. Both mean the same thing to a user: they have
 to go and find a file before this will work.
 
-Counting only tool inputs would be wrong for every emulator core, because a core
+Counting only tool inputs would be wrong for every core, because a core
 has `tools: []` — PC Engine CD would advertise `needsUserFiles: false` and then
 refuse to start without a System Card. A conditionally required BIOS
 (`requiredFor`) counts too: the flag warns that files may be needed, and it

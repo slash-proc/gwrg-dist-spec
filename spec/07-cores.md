@@ -1,6 +1,6 @@
-# Emulator cores
+# Cores
 
-An emulator core is a homebrew manifest with `kind: "emulator"` and one
+A core is a homebrew manifest with `kind: "core"` and one
 addition: `systems[]`, the launcher tabs the binary provides.
 
 Everything else is unchanged. `project`, `title`, `source`, `artifacts`, hashes,
@@ -33,7 +33,7 @@ entirely — nothing in the binary mentions a BIOS.
 Not carried at all: `segments[]` and the logo offsets. Those are load-time and
 firmware concerns. An installer copies a file and needs its size, which it has.
 
-`core_name` is the emulator's own name — `gpSP`, `Handy`, `lakesnes` — and is
+`core_name` is the core's own name — `gpSP`, `Handy`, `lakesnes` — and is
 *not* a console name. It is available; it is not the title. Somebody choosing
 what to play is looking for "Game Boy Advance".
 
@@ -51,7 +51,7 @@ what to play is looking for "Game Boy Advance".
 | `biosDir` | no | BIOS folder key, when it is not `id` |
 | `bios` | no | Files that are not games. Supplied by the user, or shipped |
 
-`systems[]` is required when `kind` is `emulator` and forbidden when `kind` is
+`systems[]` is required when `kind` is `core` and forbidden when `kind` is
 `homebrew`. A homebrew is one program; it has no launcher tab of its own.
 
 ### The BIOS folder is not always the ROM folder
@@ -253,7 +253,7 @@ implements only the keywords the schemas use. `if`/`then` and `oneOf` are a lot
 of machinery for two rules, so they are enforced by the conformance checker
 instead:
 
-- `systems[]` is required for `kind: "emulator"` and forbidden for
+- `systems[]` is required for `kind: "core"` and forbidden for
   `kind: "homebrew"`.
 - exactly one of `required` and `requiredFor` on each BIOS entry.
 
@@ -298,7 +298,7 @@ Hashes and the commit are elided as `…`, the convention
       "id": "gnw-retro-go",
       "platform": "game-and-watch",
       "label": "Game & Watch (Retro-Go SD)",
-      "kind": "emulator",
+      "kind": "core",
       "requiresAbi": { "version": 2, "minSize": 840 },
       "artifacts": [
         { "filename": "pce.bin", "bytes": 262144, "sha256": "…", "url": "pce.bin" }
