@@ -68,6 +68,7 @@
         "uses": { "type": "array", "items": { "$ref": "#/$defs/uses" } },
         "symbols": { "type": "array", "items": { "$ref": "#/$defs/symbols" } },
         "systems": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/system" } },
+        "dataDir": { "$ref": "#/$defs/subpath" },
         "runtime": { "$ref": "#/$defs/runtime" }
       }
     },
@@ -85,6 +86,12 @@
     },
 
     "extension": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" },
+
+    "subpath": {
+      "type": "string",
+      "maxLength": 100,
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9 ._-]*(?:/[A-Za-z0-9_-][A-Za-z0-9 ._-]*)*$"
+    },
 
     "system": {
       "type": "object",
@@ -286,6 +293,7 @@
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "filename": { "$ref": "#/$defs/filename" },
         "extension": { "$ref": "#/$defs/extension" },
+        "subdir": { "$ref": "#/$defs/subpath" },
         "maxBytes": { "type": "integer", "minimum": 1 },
         "label": { "$ref": "#/$defs/localised" },
         "description": { "$ref": "#/$defs/localised" }

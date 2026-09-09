@@ -375,6 +375,30 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     }
   }
 
+  // dataDir moves a homebrew's data, and a core's output placement already
+  // follows from systems[]. Allowing both would give two answers for one file.
+  for (const target of manifest.targets) {
+    if (target.dataDir !== undefined && target.kind !== "homebrew") {
+      say(ERROR, `${tag}: ${target.id} declares dataDir on a ${target.kind}`,
+        "dataDir is homebrew-only; a core's output goes to roms/<system id>/");
+    }
+  }
+  // A subdir with nothing to be relative to is a path the installer cannot
+  // resolve: it would land beside the binary, which is not what was meant.
+  for (const target of manifest.targets) {
+    if (target.dataDir !== undefined) continue;
+    for (const use of target.uses ?? []) {
+      const tool = manifest.tools.find((t) => t.id === use.tool);
+      for (const id of use.outputs ?? []) {
+        const out = (tool?.outputs ?? []).find((o) => o.id === id);
+        if (out?.subdir !== undefined) {
+          say(ERROR, `${tag}: ${target.id} uses ${use.tool}/${id} with a subdir but declares no dataDir`,
+            `subdir "${out.subdir}" is relative to dataDir, which is absent`);
+        }
+      }
+    }
+  }
+
   // Cross-field rules JSON Schema cannot state.
   for (const tool of manifest.tools) {
     for (const inp of tool.inputs ?? []) {

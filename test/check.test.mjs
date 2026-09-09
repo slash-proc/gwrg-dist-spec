@@ -471,6 +471,36 @@ r = await check("owner/repo", opts);
 expect("a derived output counts as installing something",
   !errorsOf(r).some((e) => e.includes("installs nothing")), errorsOf(r).join(" | "));
 
+// dataDir belongs to a homebrew; a core's placement follows from systems[].
+const coreDataDir = emuTarget();
+coreDataDir.dataDir = "whatever";
+set(emuIndex(), manifest({ targets: [coreDataDir] }));
+r = await check("owner/repo", opts);
+expect("catches dataDir on a core",
+  errorsOf(r).some((e) => e.includes("dataDir on a core")), errorsOf(r).join(" | "));
+
+// A subdir is relative to dataDir, so it needs one to be relative to.
+const orphanSubdir = manifest();
+orphanSubdir.tools = [{
+  id: "conv", processor: { type: "wasm", version: 1 }, title: { en: "C" },
+  binary: { file: "c.wasm", url: "c.wasm", bytes: 1, sha256: HASH_ONE },
+  limits: { maxMemoryPages: 1, maxOutputBytes: 1 },
+  inputs: [{ id: "src", required: true, allowMultiple: false, extensions: [".phd"], maxBytes: 1 }],
+  outputs: [{ id: "fmv", filename: "CAFE.AVI", subdir: "fmv", maxBytes: 1 }],
+}];
+orphanSubdir.targets[0].uses = [{ tool: "conv", outputs: ["fmv"], required: false }];
+set(index(), orphanSubdir);
+r = await check("owner/repo", opts);
+expect("catches a subdir with no dataDir",
+  errorsOf(r).some((e) => e.includes("declares no dataDir")), errorsOf(r).join(" | "));
+
+const withDataDir = structuredClone(orphanSubdir);
+withDataDir.targets[0].dataDir = "openlara";
+set(index(), withDataDir);
+r = await check("owner/repo", opts);
+expect("accepts a subdir under a dataDir",
+  !errorsOf(r).some((e) => e.includes("dataDir")), errorsOf(r).join(" | "));
+
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

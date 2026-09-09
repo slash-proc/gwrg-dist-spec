@@ -432,5 +432,18 @@ bad("rejects a filename over 200 characters", (d) => {
   d.targets[0].artifacts[0].filename = "a".repeat(201) + ".bin";
 });
 
+// A homebrew whose data lives in a folder of its own, and a file nested
+// deeper inside it.
+good("accepts dataDir", (d) => { d.targets[0].dataDir = "openlara"; });
+goodTool("accepts a subdir on an output", (d) => {
+  d.targets[0].dataDir = "openlara";
+  d.tools[0].outputs[0].subdir = "fmv";
+});
+good("accepts a nested dataDir", (d) => { d.targets[0].dataDir = "openlara/data"; });
+for (const [why, v] of [["traversal", "../evil"], ["an absolute path", "/abs"],
+                        ["an empty segment", "a//b"], ["a leading dot", ".hidden"]]) {
+  bad(`rejects ${why} in dataDir`, (d) => { d.targets[0].dataDir = v; });
+}
+
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

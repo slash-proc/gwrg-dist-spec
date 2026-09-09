@@ -314,6 +314,7 @@ other is what it will ever want to.
 | `uses` | no | Converters this target needs |
 | `symbols` | no | Debug symbols. Published, never installed |
 | `systems` | see below | Launcher tabs. Cores only |
+| `dataDir` | no | Folder under the install directory this homebrew reads from |
 | `runtime` | no | Working space this needs beyond its files |
 
 `systems[]` is required when `kind` is `core` and forbidden when `kind` is
@@ -355,6 +356,34 @@ A project says only:
 Within that directory the firmware picks out the file the launcher starts by
 its `.bin` extension. Everything else in the install set is installed
 alongside it.
+
+#### A homebrew that keeps its data in a folder
+
+Most homebrew load their files from beside the binary. Some do not: OpenLara
+reads `/homebrews/openlara/TITLE.PKD`, and the folder name is compiled into the
+binary — `os.cpp` searches a fixed list of paths.
+
+`dataDir` states that folder:
+
+```json
+{ "id": "gnw-retro-go", "kind": "homebrew", "dataDir": "openlara", ... }
+```
+
+It is a name, not a flag, because nothing can derive it. This project's
+`CORE_NAME` is `openlara`, its `HB_NAME` is `OpenLara` and its binary is
+`OpenLara.bin` — three spellings, and only one is what the firmware opens. A
+boolean meaning "put it in a folder named after the project" would pick one of
+the three and be right by luck on a case-insensitive card and wrong elsewhere.
+This is the same lesson `biosDir` records: state the key that cannot be worked
+out, and omit it when there is nothing to state.
+
+The binary is placed as always — `dataDir` moves the *data*, never the
+executable. A file may sit deeper still with `subdir`, relative to `dataDir`,
+which is how cutscenes reach `/homebrews/openlara/fmv/` while levels stay in
+`/homebrews/openlara/`.
+
+`dataDir` is homebrew-only. A core's converted output is a game and goes to
+`roms/<system id>/`, which its own `systems[]` already determines.
 
 **A converter's output is placed by what it is, not by where the project
 lives.** A homebrew's converted assets sit beside its binary, because that is
@@ -500,6 +529,7 @@ of outputs follows from it and is not stated separately.
 | `id` | yes | Referenced by `uses[].outputs`, and what the module emits |
 | `filename` | either | Fixed name on the card |
 | `extension` | either | Name comes from the input, with this extension |
+| `subdir` | no | Folder within `dataDir` this file goes in |
 | `maxBytes` | yes | Ceiling, per produced file |
 | `label` | no | Localised. A name for the file a user just produced |
 | `description` | no | Localised. What it is for |

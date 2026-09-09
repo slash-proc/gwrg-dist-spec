@@ -62,6 +62,16 @@ Forcing the extension is the load-bearing rule. The install set is a flat
 directory, so a user-supplied stem entering it is untrusted input — a WAD named
 `doom.bin` must never land where a core binary goes.
 
+**Place a homebrew's data under `dataDir` when it declares one.** The binary
+still goes where it always went; only the data moves, into
+`<install dir>/<dataDir>/`, and a file with a `subdir` goes deeper still,
+relative to that. Both are manifest-declared path segments, so validate them as
+paths — no leading separator, no `..`, no empty segment — and refuse rather
+than sanitising, the same as any other name you did not choose yourself.
+
+The collision rules apply per directory as before, so files in `openlara/` and
+`openlara/fmv/` cannot collide with each other or with the binary beside them.
+
 **Run a converter once per file when the input says `runPerFile`.** Check
 `maxCount` before running, not after: the run count is otherwise the one
 unbounded quantity in the model. Accumulate the produced files across runs
