@@ -110,7 +110,7 @@ cut, and are knowingly left that way.
 | [blueMSX](https://github.com/slash-proc/blueMSX-retro-go-sd) | v0.0.3 | 11 BIOS (shipped) |
 | [fceumm](https://github.com/slash-proc/fceumm-retro-go-sd) | v0.1.1 | 2 BIOS, requiredFor |
 | [PokeMini](https://github.com/slash-proc/PokeMini-retro-go-sd) | v0.0.3 | 1 BIOS |
-| [gba](https://github.com/slash-proc/gba-retro-go-sd) | v0.0.3 | 1 BIOS, mapped, sidecar |
+| [gba](https://github.com/slash-proc/gba-retro-go-sd) | v0.0.4 | 1 BIOS, mapped, sidecar |
 | [doom](https://github.com/slash-proc/doom-retro-go-sd) | v0.2.1 | converter, runPerFile, derived names, 4 variants |
 | [caprice32](https://github.com/slash-proc/caprice32-retro-go-sd) | v0.1.1 | — |
 | [gwenesis](https://github.com/slash-proc/gwenesis-retro-go-sd) | v0.0.3 | — |
