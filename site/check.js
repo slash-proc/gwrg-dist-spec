@@ -399,6 +399,34 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     }
   }
 
+  // A `mapped` artifact is placed at a real address and, when it declares a
+  // `base`, relocated by scanning it for 32-bit words in [base, base + bytes).
+  // That window has to exist and the sentinel has to be impossible, which are
+  // the only two things checkable from here. Everything else about the field
+  // -- whether the builder actually relocated it, whether the blob was built
+  // with word relocations -- is out of reach of a manifest.
+  const REAL_RANGES = [
+    ["internal flash", 0x08000000, 0x0fffffff],
+    ["DTCM/SRAM", 0x20000000, 0x2007ffff],
+    ["AXI SRAM", 0x24000000, 0x2407ffff],
+    ["memory-mapped QSPI", 0x90000000, 0x9fffffff],
+  ];
+  for (const target of manifest.targets) {
+    for (const a of target.artifacts ?? []) {
+      const base = a.mapped?.base;
+      if (base === undefined) continue;
+      if (base + a.bytes > 0x100000000) {
+        say(ERROR, `${tag}: ${target.id}/${a.filename} is linked past the end of the address space`,
+          `base ${hex(base)} plus ${a.bytes} bytes does not fit in 32 bits`);
+      }
+      const real = REAL_RANGES.find(([, lo, hi]) => base >= lo && base <= hi);
+      if (real) {
+        say(WARN, `${tag}: ${target.id}/${a.filename} is linked at an address that really exists`,
+          `${hex(base)} is in ${real[0]}; a sentinel is supposed to be an address no real pointer can hold`);
+      }
+    }
+  }
+
   // Cross-field rules JSON Schema cannot state.
   for (const tool of manifest.tools) {
     for (const inp of tool.inputs ?? []) {
@@ -473,6 +501,10 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   }
 
   return out;
+}
+
+function hex(n) {
+  return `0x${n.toString(16).toUpperCase().padStart(8, "0")}`;
 }
 
 function summarise(checks) {

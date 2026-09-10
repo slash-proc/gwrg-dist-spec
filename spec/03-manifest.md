@@ -425,6 +425,67 @@ one.
 | `bytes` | yes | Size |
 | `sha256` | yes | Of the file |
 | `url` | yes | A plain filename, resolved beside this manifest |
+| `mapped` | no | This file must live at a real address, not in a filesystem |
+
+#### A file the device executes in place
+
+Some files are not read; they are *run*, or indexed, straight out of
+memory-mapped QSPI. A core too large for the RAM it is given splits itself:
+the hot half stays in RAM, the cold half — a scanline renderer, a BIOS image —
+is linked separately, shipped as its own file and executed where it lies.
+RAM_EMU is about 724 KB and gpSP wants about 853 KB, so for the GBA core this
+is not an optimisation but the only way the thing fits. A homebrew may do it
+too; the firmware's own source cites Super Metroid's `sm.xip` as the same
+trick.
+
+An artifact says so with `mapped`, whose presence is the whole claim: this file
+must be placed somewhere directly addressable, and a regular filesystem is not
+that.
+
+```json
+{ "filename": "gba.xip", "bytes": 448512, "sha256": "…", "url": "gba.xip",
+  "mapped": { "base": 3737124864 } }
+```
+
+`base` is the sentinel address the blob was linked at — `0xDEC00000` here,
+`0xBEEF0000` for PICO-8. It is optional, and absent when the file needs no
+fixing: pure read-only data with no internal pointers can be placed anywhere
+and read as it stands.
+
+When it is present, the blob holds **absolute** addresses in the window
+`[base, base + bytes)`, and whoever places the file at a real address must add
+`actual - base` to every 32-bit word falling in that window, masking bit 0
+first because a function pointer carries the Thumb bit there. The address is
+impossible on purpose. No real pointer can equal `0xDEC00000` and ordinary data
+essentially never contains one, so a word in that window is not a plausible
+pointer into the blob — it is certainly one, which is what makes a blind word
+scan safe.
+
+Two consumers read this field differently, and the difference is the reason it
+exists.
+
+On an **SD install** the installer only copies the file. The core caches it
+into QSPI itself at load time and patches it on the way in
+(`store_file_in_flash_relocate` with a `flash_relocate_cb_t`), so it already
+knows its own sentinel and `mapped` tells the installer nothing it must act on.
+It is informational there.
+
+On a **flash-only install** there is no runtime cache to fall back on.
+`gw_flash_alloc.c` is compiled only when `SD_CARD=1` — Makefile.common puts it
+inside `ifeq ($(SD_CARD), 1)` — and `EXTFLASH_TOTAL_LENGTH` is zero in that
+build. A builder laying out the flash image must therefore place the file in
+memory-mapped flash itself and apply the relocation for the address it chose.
+The firmware does exactly this today for PICO-8, hardcoded by name
+(`--bundle-pico8-ro-in-frogfs`, `scripts/pico8_ro_build_patch.py`). `mapped` is
+what lets a builder do it for a core it has never heard of.
+
+**A builder that places a `mapped` artifact at an address it chose must apply
+the relocation when `base` is present.** Placing it raw leaves a blob full of
+impossible addresses, and the device faults the first time it uses one.
+
+Otherwise a `mapped` artifact is an ordinary published file. It is hashed, it
+is mirrored into `dist/<tag>/`, it counts in the install set, and its name
+collides with other names the same way any artifact's does.
 
 ### `uses`
 
