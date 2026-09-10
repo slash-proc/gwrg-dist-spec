@@ -445,37 +445,53 @@ for (const [why, v] of [["traversal", "../evil"], ["an absolute path", "/abs"],
   bad(`rejects ${why} in dataDir`, (d) => { d.targets[0].dataDir = v; });
 }
 
-// An artifact the device executes in place. `mapped` alone means "addressable,
-// nothing to patch"; `base` names the sentinel the blob was linked at.
-good("accepts mapped with a base", (d) => {
-  d.targets[0].artifacts[0].mapped = { base: 0xDEC00000 };
+// An artifact the device executes in place. `mapped: true` alone means
+// "addressable, nothing to patch"; `relocBase` names the sentinel the blob was
+// linked at, and means nothing without `mapped`.
+good("accepts mapped with a relocBase", (d) => {
+  d.targets[0].artifacts[0].mapped = true;
+  d.targets[0].artifacts[0].relocBase = 0xDEC00000;
 });
-good("accepts an empty mapped", (d) => { d.targets[0].artifacts[0].mapped = {}; });
-good("accepts a base of zero", (d) => { d.targets[0].artifacts[0].mapped = { base: 0 }; });
-good("accepts the largest u32 base", (d) => {
-  d.targets[0].artifacts[0].mapped = { base: 4294967295 };
+good("accepts a bare mapped", (d) => { d.targets[0].artifacts[0].mapped = true; });
+good("accepts mapped false", (d) => { d.targets[0].artifacts[0].mapped = false; });
+good("accepts a relocBase of zero", (d) => {
+  d.targets[0].artifacts[0].mapped = true;
+  d.targets[0].artifacts[0].relocBase = 0;
+});
+good("accepts the largest u32 relocBase", (d) => {
+  d.targets[0].artifacts[0].mapped = true;
+  d.targets[0].artifacts[0].relocBase = 4294967295;
 });
 goodEmu("accepts mapped on a core artifact", (d) => {
-  d.targets[0].artifacts[0].mapped = { base: 0xBEEF0000 };
+  d.targets[0].artifacts[0].mapped = true;
+  d.targets[0].artifacts[0].relocBase = 0xBEEF0000;
 });
-bad("rejects a negative base", (d) => { d.targets[0].artifacts[0].mapped = { base: -1 }; });
-bad("rejects a base above u32", (d) => {
-  d.targets[0].artifacts[0].mapped = { base: 4294967296 };
+bad("rejects a negative relocBase", (d) => {
+  d.targets[0].artifacts[0].mapped = true;
+  d.targets[0].artifacts[0].relocBase = -1;
 });
-bad("rejects a base written as a hex string", (d) => {
-  d.targets[0].artifacts[0].mapped = { base: "0xDEC00000" };
+bad("rejects a relocBase above u32", (d) => {
+  d.targets[0].artifacts[0].mapped = true;
+  d.targets[0].artifacts[0].relocBase = 4294967296;
 });
-bad("rejects a fractional base", (d) => {
-  d.targets[0].artifacts[0].mapped = { base: 3737124864.5 };
+bad("rejects a relocBase written as a hex string", (d) => {
+  d.targets[0].artifacts[0].mapped = true;
+  d.targets[0].artifacts[0].relocBase = "0xDEC00000";
 });
-bad("rejects an unknown field inside mapped", (d) => {
-  d.targets[0].artifacts[0].mapped = { base: 0xDEC00000, size: 512 };
+bad("rejects a fractional relocBase", (d) => {
+  d.targets[0].artifacts[0].mapped = true;
+  d.targets[0].artifacts[0].relocBase = 3737124864.5;
+});
+bad("rejects mapped as an object", (d) => {
+  d.targets[0].artifacts[0].mapped = { base: 0xDEC00000 };
 });
 bad("rejects mapped as a number", (d) => { d.targets[0].artifacts[0].mapped = 3737124864; });
-bad("rejects mapped as true", (d) => { d.targets[0].artifacts[0].mapped = true; });
-// It belongs to an artifact, not to the things that merely look like one.
+// They belong to an artifact, not to the things that merely look like one.
 bad("rejects mapped on a cover", (d) => {
-  d.cover = { filename: "c.png", bytes: 1, sha256: HASH, url: "c.png", mapped: {} };
+  d.cover = { filename: "c.png", bytes: 1, sha256: HASH, url: "c.png", mapped: true };
+});
+bad("rejects relocBase on a cover", (d) => {
+  d.cover = { filename: "c.png", bytes: 1, sha256: HASH, url: "c.png", relocBase: 0 };
 });
 
 console.log(failures ? `\n${failures} failed` : "\nall passed");

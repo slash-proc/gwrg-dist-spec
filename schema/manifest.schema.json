@@ -156,15 +156,8 @@
         "bytes": { "type": "integer", "minimum": 0 },
         "sha256": { "$ref": "#/$defs/sha256" },
         "url": { "$ref": "#/$defs/filename" },
-        "mapped": { "$ref": "#/$defs/mapped" }
-      }
-    },
-
-    "mapped": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "base": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+        "mapped": { "type": "boolean" },
+        "relocBase": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
       }
     },
 

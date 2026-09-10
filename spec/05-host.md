@@ -111,21 +111,21 @@ boots into uninitialised heap with no error. The firmware skips these checks
 because it runs on a slow machine. A browser has cycles to spare.
 
 **Place a `mapped` artifact where the device can address it.** An artifact
-carrying `mapped` is not a file the program opens; it is memory the program
-executes or reads in place, and a copy of it in a filesystem is no use at all.
-An installer writing to an SD card has nothing extra to do — the core caches
+carrying `"mapped": true` is not a file the program opens; it is memory the
+program executes or reads in place, and a copy of it in a filesystem is no use
+at all. An installer writing to an SD card has nothing extra to do — the core caches
 the file into QSPI itself at load time and patches it on the way in — but a
 builder laying out a flash image has no such runtime help, and must put the
 file in memory-mapped flash at an address of its own choosing.
 
-**Apply the relocation when `base` is present.** The blob holds absolute
-addresses in `[base, base + bytes)`. Having chosen a real address, walk the
-file as 32-bit words, and for each word whose value falls in that window — mask
-bit 0 off first, since a function pointer carries the Thumb bit there — add
-`actual - base`. The sentinel is an impossible address, so a word in range is a
-pointer and not a coincidence. Skipping this step is not a degraded install; it
-writes a blob full of addresses that cannot exist, and the device faults the
-first time it uses one.
+**Apply the relocation when `relocBase` is present.** The blob holds absolute
+addresses in `[relocBase, relocBase + bytes)`. Having chosen a real address,
+walk the file as 32-bit words, and for each word whose value falls in that
+window — mask bit 0 off first, since a function pointer carries the Thumb bit
+there — add `actual - relocBase`. The sentinel is an impossible address, so a
+word in range is a pointer and not a coincidence. Skipping this step is not a
+degraded install; it writes a blob full of addresses that cannot exist, and the
+device faults the first time it uses one.
 
 **Store it whole, uncompressed, and patch it after the layout is fixed.**
 Three things follow from the file being memory rather than data, and each is a

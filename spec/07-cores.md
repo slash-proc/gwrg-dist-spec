@@ -271,8 +271,8 @@ scanning it for 32-bit words in the sentinel window. Nothing checks that the
 blob can actually be relocated that way, and the failure is silent until the
 device faults, so the requirement is worth stating.
 
-**`base`-style relocation works only if every reference to the sentinel range
-exists in the blob as a whole 32-bit word.** A toolchain is free to materialise
+**`relocBase`-style relocation works only if every reference to the sentinel
+range exists in the blob as a whole 32-bit word.** A toolchain is free to materialise
 an address as a MOVW/MOVT immediate pair instead, splitting it across two
 instructions where sixteen bits live in each — and a word scan cannot see
 either half. Such a blob passes every check, relocates cleanly as far as the
@@ -281,7 +281,7 @@ builder can tell, and then jumps to `0xDEC00000`.
 The remedy is a build flag on the objects that go into the blob:
 `-mword-relocations` on GCC, or whatever the equivalent is for another
 toolchain. It costs a literal pool entry per address and buys the only property
-the relocation pass depends on. A project that declares `base` without it has
+the relocation pass depends on. A project that declares `relocBase` without it has
 declared something untrue.
 
 ## The template gate

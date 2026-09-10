@@ -425,7 +425,8 @@ one.
 | `bytes` | yes | Size |
 | `sha256` | yes | Of the file |
 | `url` | yes | A plain filename, resolved beside this manifest |
-| `mapped` | no | This file must live at a real address, not in a filesystem |
+| `mapped` | no | `true` if this file must live at a real address, not in a filesystem |
+| `relocBase` | no | The sentinel address the blob was linked at. Only with `mapped` |
 
 #### A file the device executes in place
 
@@ -438,24 +439,30 @@ is not an optimisation but the only way the thing fits. A homebrew may do it
 too; the firmware's own source cites Super Metroid's `sm.xip` as the same
 trick.
 
-An artifact says so with `mapped`, whose presence is the whole claim: this file
+An artifact says so with `"mapped": true`, which is the whole claim: this file
 must be placed somewhere directly addressable, and a regular filesystem is not
-that.
+that. Pure read-only data with no internal pointers needs nothing more — it can
+be placed anywhere addressable and read as it stands.
+
+```json
+{ "filename": "font.rodata", "bytes": 16384, "sha256": "…", "url": "font.rodata",
+  "mapped": true }
+```
+
+A blob that holds absolute addresses adds `relocBase`, the sentinel address it
+was linked at — `0xDEC00000` here, `0xBEEF0000` for PICO-8. It is optional, and
+absent when the file needs no fixing; it is meaningless without `mapped`, and a
+manifest that carries it alone is wrong.
 
 ```json
 { "filename": "gba.xip", "bytes": 448512, "sha256": "…", "url": "gba.xip",
-  "mapped": { "base": 3737124864 } }
+  "mapped": true, "relocBase": 3737124864 }
 ```
 
-`base` is the sentinel address the blob was linked at — `0xDEC00000` here,
-`0xBEEF0000` for PICO-8. It is optional, and absent when the file needs no
-fixing: pure read-only data with no internal pointers can be placed anywhere
-and read as it stands.
-
 When it is present, the blob holds **absolute** addresses in the window
-`[base, base + bytes)`, and whoever places the file at a real address must add
-`actual - base` to every 32-bit word falling in that window, masking bit 0
-first because a function pointer carries the Thumb bit there. The address is
+`[relocBase, relocBase + bytes)`, and whoever places the file at a real address
+must add `actual - relocBase` to every 32-bit word falling in that window,
+masking bit 0 first because a function pointer carries the Thumb bit there. The address is
 impossible on purpose. No real pointer can equal `0xDEC00000` and ordinary data
 essentially never contains one, so a word in that window is not a plausible
 pointer into the blob — it is certainly one, which is what makes a blind word
@@ -480,7 +487,7 @@ The firmware does exactly this today for PICO-8, hardcoded by name
 what lets a builder do it for a core it has never heard of.
 
 **A builder that places a `mapped` artifact at an address it chose must apply
-the relocation when `base` is present.** Placing it raw leaves a blob full of
+the relocation when `relocBase` is present.** Placing it raw leaves a blob full of
 impossible addresses, and the device faults the first time it uses one.
 
 Otherwise a `mapped` artifact is an ordinary published file. It is hashed, it

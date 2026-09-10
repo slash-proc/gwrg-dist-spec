@@ -400,7 +400,8 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   }
 
   // A `mapped` artifact is placed at a real address and, when it declares a
-  // `base`, relocated by scanning it for 32-bit words in [base, base + bytes).
+  // `relocBase`, relocated by scanning it for 32-bit words in
+  // [relocBase, relocBase + bytes).
   // That window has to exist and the sentinel has to be impossible, which are
   // the only two things checkable from here. Everything else about the field
   // -- whether the builder actually relocated it, whether the blob was built
@@ -413,11 +414,15 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   ];
   for (const target of manifest.targets) {
     for (const a of target.artifacts ?? []) {
-      const base = a.mapped?.base;
+      const base = a.relocBase;
+      if (base !== undefined && a.mapped !== true) {
+        say(ERROR, `${tag}: ${target.id}/${a.filename} declares relocBase but is not mapped`,
+          `relocBase ${hex(base)} is the address the blob was linked at, which means nothing unless the file is mapped`);
+      }
       if (base === undefined) continue;
       if (base + a.bytes > 0x100000000) {
         say(ERROR, `${tag}: ${target.id}/${a.filename} is linked past the end of the address space`,
-          `base ${hex(base)} plus ${a.bytes} bytes does not fit in 32 bits`);
+          `relocBase ${hex(base)} plus ${a.bytes} bytes does not fit in 32 bits`);
       }
       const real = REAL_RANGES.find(([, lo, hi]) => base >= lo && base <= hi);
       if (real) {

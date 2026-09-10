@@ -528,46 +528,54 @@ expect("accepts a subdir under a dataDir",
 // An artifact executed in place out of memory-mapped flash. It is a published
 // file like any other -- hashed, mirrored, counted in the install set -- and
 // the checker only rules on what a manifest can get wrong about the address.
-const xip = (mapped) => {
+const xip = (extra) => {
   const m = manifest();
   m.targets[0].artifacts.push({
-    filename: "gba.xip", bytes: 1, sha256: HASH_ONE, url: "gba.xip", mapped,
+    filename: "gba.xip", bytes: 1, sha256: HASH_ONE, url: "gba.xip", ...extra,
   });
   return m;
 };
 const withXip = { "/dist/v0.1.2/gba.xip": Buffer.alloc(1) };
 
-set(index(), xip({ base: 0xDEC00000 }), withXip);
+set(index(), xip({ mapped: true, relocBase: 0xDEC00000 }), withXip);
 r = await check("owner/repo", { ...opts, hash: true });
-expect("a mapped artifact with a sentinel base passes", r.summary.conformant, errorsOf(r).join(" | "));
+expect("a mapped artifact with a sentinel relocBase passes", r.summary.conformant, errorsOf(r).join(" | "));
 expect("a mapped artifact is still fetched and hashed",
   r.checks.some((c) => c.level === "ok" && c.label.includes("gba.xip") && c.detail.includes("1 bytes")));
 expect("a mapped artifact counts in the install set",
   r.versions[0].targets[0].installed.includes("gba.xip"),
   JSON.stringify(r.versions[0].targets[0].installed));
 
-set(index(), xip({}), withXip);
+set(index(), xip({ mapped: true }), withXip);
 r = await check("owner/repo", opts);
-expect("mapped with no base is fine", r.summary.conformant, errorsOf(r).join(" | "));
+expect("mapped with no relocBase is fine", r.summary.conformant, errorsOf(r).join(" | "));
+
+// A relocBase says what to add to the words of a blob nobody promised to place
+// at an address. It is the `subdir` without a `dataDir` of this field.
+set(index(), xip({ relocBase: 0xDEC00000 }), withXip);
+r = await check("owner/repo", opts);
+expect("catches a relocBase with no mapped",
+  errorsOf(r).some((e) => e.includes("relocBase but is not mapped")), errorsOf(r).join(" | "));
 
 // A sentinel is meant to be an address no real pointer can hold. One that
 // names a region the device actually has is probably a mistake, not a plan.
 for (const [why, base] of [["internal flash", 0x08000000], ["SRAM", 0x24000000],
                            ["QSPI", 0x90100000]]) {
-  set(index(), xip({ base }), withXip);
+  set(index(), xip({ mapped: true, relocBase: base }), withXip);
   r = await check("owner/repo", opts);
-  expect(`warns about a base in ${why}`,
+  expect(`warns about a relocBase in ${why}`,
     r.checks.some((c) => c.level === "warn" && c.label.includes("really exists")) && r.summary.conformant,
     r.checks.filter((c) => c.level === "warn").map((c) => c.label).join(" | "));
 }
 
-// The window the relocation walks is [base, base + bytes), so it has to exist.
+// The window the relocation walks is [relocBase, relocBase + bytes), so it has
+// to exist.
 const big = Buffer.alloc(4096);
 const overflow = manifest();
 overflow.targets[0].artifacts.push({
   filename: "gba.xip", bytes: big.length, url: "gba.xip",
   sha256: createHash("sha256").update(big).digest("hex"),
-  mapped: { base: 0xFFFFFF00 },
+  mapped: true, relocBase: 0xFFFFFF00,
 });
 set(index(), overflow, { "/dist/v0.1.2/gba.xip": big });
 r = await check("owner/repo", opts);
@@ -575,9 +583,9 @@ expect("catches a window that runs off the end of the address space",
   errorsOf(r).some((e) => e.includes("past the end")), errorsOf(r).join(" | "));
 
 // Two names that fold together are one file on the card, mapped or not.
-const xipClash = xip({ base: 0xDEC00000 });
+const xipClash = xip({ mapped: true, relocBase: 0xDEC00000 });
 xipClash.targets[0].artifacts.push({
-  filename: "GBA.XIP", bytes: 1, sha256: HASH_ONE, url: "gba.xip", mapped: {},
+  filename: "GBA.XIP", bytes: 1, sha256: HASH_ONE, url: "gba.xip", mapped: true,
 });
 set(index(), xipClash, withXip);
 r = await check("owner/repo", opts);
