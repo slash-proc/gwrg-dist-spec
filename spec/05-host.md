@@ -127,6 +127,35 @@ pointer and not a coincidence. Skipping this step is not a degraded install; it
 writes a blob full of addresses that cannot exist, and the device faults the
 first time it uses one.
 
+**Store it whole, uncompressed, and patch it after the layout is fixed.**
+Three things follow from the file being memory rather than data, and each is a
+way to produce an image that looks finished and faults on first use.
+
+It cannot be compressed. A builder that packs it — the firmware's own image
+builder has a `--rom-compression` switch driven by `COMPRESS`, and it is
+applied by the builder, not chosen by the core — leaves bytes that are in
+mapped flash and still unreadable in place. Nothing in the artifact says
+"compress me", so the rule has to be that nothing may.
+
+It cannot be split. Addressable means one run of bytes at one address; a file
+scattered across blocks has no address to give the core.
+
+And the patch happens once the address is final, not before. Relocating to an
+address the layout later moves is worse than not relocating, because the result
+still looks plausible.
+
+Place it on a 4-byte boundary. The relocation reads 32-bit words, and the
+device fetches instructions from it; an odd address breaks both. No artifact
+has yet needed more than that, so the spec asks for no more.
+
+**Only whole aligned words are relocated.** The scan reads the file as an array
+of 32-bit words, so it can only fix an address stored as one. A toolchain that
+materialises an address as a `MOVW`/`MOVT` pair splits it across two instruction
+encodings, where neither half is the value being looked for and the scan walks
+straight past. That is a property of how the blob was built, not of the patcher
+— see [cores](07-cores.md) — and a blob built that way cannot be relocated by
+this method at all.
+
 **Refuse rather than guess when you cannot place it addressably.** A host or
 builder with no memory-mapped region to give the file, or no way to relocate it,
 has not got a partial install — it has one that hardfaults. Say so and stop.
