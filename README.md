@@ -90,46 +90,40 @@ cut, and are knowingly left that way.
 
 **Homebrew**
 
-| Project | Version | What it exercises |
+| Project | Version | Features |
 |---|---|---|
-| [mine-sweeper](https://github.com/slash-proc/mine-sweeper-retro-go-sd) | v0.2.0 | the plain case: one binary, no user files |
-| [snake](https://github.com/slash-proc/snake-retro-go-sd) | v1.1.0 | the plain case |
-| [pong](https://github.com/slash-proc/pong-retro-go-sd) | v0.0.2 | no cover art to publish — the cover is generated at build time |
-| [ccleste](https://github.com/slash-proc/ccleste-retro-go-sd) | v0.0.2 | `originalSystem: pico8`, a console no core emulates |
-| [smw](https://github.com/slash-proc/smw-retro-go-sd) | v0.4.1 | a converter: one ROM in, one asset pack out |
-| [zelda3](https://github.com/slash-proc/zelda3-retro-go-sd) | v0.3.2 | two inputs, 12 variants, many files into **one** asset pack |
-| [openlara](https://github.com/slash-proc/openlara-retro-go-sd) | v0.0.1 | `runPerFile` with derived names, 21 variants, `dataDir` |
+| [mine-sweeper](https://github.com/slash-proc/mine-sweeper-retro-go-sd) | v0.2.0 | — |
+| [snake](https://github.com/slash-proc/snake-retro-go-sd) | v1.1.0 | — |
+| [pong](https://github.com/slash-proc/pong-retro-go-sd) | v0.0.2 | — |
+| [ccleste](https://github.com/slash-proc/ccleste-retro-go-sd) | v0.0.2 | originalSystem |
+| [smw](https://github.com/slash-proc/smw-retro-go-sd) | v0.4.1 | originalSystem, converter, 1 variant |
+| [zelda3](https://github.com/slash-proc/zelda3-retro-go-sd) | v0.3.2 | originalSystem, converter, 2 inputs, 12 variants |
+| [openlara](https://github.com/slash-proc/openlara-retro-go-sd) | v0.0.1 | originalSystem, dataDir, converter, runPerFile, derived names, 21 variants |
 
 **Cores**
 
-| Project | Version | What it exercises |
+| Project | Version | Features |
 |---|---|---|
-| [pce-go](https://github.com/slash-proc/pce-go-retro-go-sd) | v0.0.3 | two systems, a `.cue` and its tracks, `biosDir` differing from the ROM folder |
-| [SMSPlusGX](https://github.com/slash-proc/SMSPlusGX-retro-go-sd) | v0.0.5 | four systems from one binary; `col` browsing but reading `bios/coleco/` |
-| [blueMSX](https://github.com/slash-proc/blueMSX-retro-go-sd) | v0.0.3 | eleven BIOS files, all shipped by the project rather than found by the user |
-| [fceumm](https://github.com/slash-proc/fceumm-retro-go-sd) | v0.1.1 | a BIOS required only for one extension (`requiredFor: .fds`) |
-| [gba](https://github.com/slash-proc/gba-retro-go-sd) | v0.0.3 | `mapped` — a blob executed in place from memory-mapped flash |
-| [tgb-dual](https://github.com/slash-proc/tgb-dual-retro-go-sd) | v0.1.1 | two genuinely different systems from one binary |
-| [PokeMini](https://github.com/slash-proc/PokeMini-retro-go-sd) | v0.0.3 | an optional BIOS with a linked-in fallback |
-| [doom](https://github.com/slash-proc/doom-retro-go-sd) | v0.2.1 | a core that emulates nothing, and a converter with derived names |
-| [gwenesis](https://github.com/slash-proc/gwenesis-retro-go-sd) | v0.0.3 | the plain case |
-| [lynx](https://github.com/slash-proc/lynx-retro-go-sd) | v0.0.3 | the plain case |
-| [snes](https://github.com/slash-proc/snes-retro-go-sd) | v0.0.4 | the plain case |
-| [caprice32](https://github.com/slash-proc/caprice32-retro-go-sd) | v0.1.1 | disks found by scanning siblings — the case the spec declines to model |
-| [stella2014](https://github.com/slash-proc/stella2014-retro-go-sd) | v0.1.1 | the plain case |
-| [prosystem](https://github.com/slash-proc/prosystem-retro-go-sd) | v0.0.3 | a BIOS the upstream emulator supports and this port never loads |
-| [potator](https://github.com/slash-proc/potator-retro-go-sd) | v0.0.3 | the plain case |
-| [LCD-Game-Emulator](https://github.com/slash-proc/LCD-Game-Emulator-retro-go-sd) | v0.0.3 | self-contained `.gw` packages |
-| [tama](https://github.com/slash-proc/tama-retro-go-sd) | v0.0.2 | the plain case |
+| [pce-go](https://github.com/slash-proc/pce-go-retro-go-sd) | v0.0.3 | 2 systems, extension groups, 1 BIOS, biosDir |
+| [SMSPlusGX](https://github.com/slash-proc/SMSPlusGX-retro-go-sd) | v0.0.5 | 4 systems, 1 BIOS, biosDir |
+| [tgb-dual](https://github.com/slash-proc/tgb-dual-retro-go-sd) | v0.1.1 | 2 systems |
+| [blueMSX](https://github.com/slash-proc/blueMSX-retro-go-sd) | v0.0.3 | 11 BIOS (shipped) |
+| [fceumm](https://github.com/slash-proc/fceumm-retro-go-sd) | v0.1.1 | 2 BIOS, requiredFor |
+| [PokeMini](https://github.com/slash-proc/PokeMini-retro-go-sd) | v0.0.3 | 1 BIOS |
+| [gba](https://github.com/slash-proc/gba-retro-go-sd) | v0.0.3 | 1 BIOS, mapped, sidecar |
+| [doom](https://github.com/slash-proc/doom-retro-go-sd) | v0.2.1 | converter, runPerFile, derived names, 4 variants |
+| [caprice32](https://github.com/slash-proc/caprice32-retro-go-sd) | v0.1.1 | — |
+| [gwenesis](https://github.com/slash-proc/gwenesis-retro-go-sd) | v0.0.3 | — |
+| [LCD-Game-Emulator](https://github.com/slash-proc/LCD-Game-Emulator-retro-go-sd) | v0.0.3 | — |
+| [lynx](https://github.com/slash-proc/lynx-retro-go-sd) | v0.0.3 | — |
+| [potator](https://github.com/slash-proc/potator-retro-go-sd) | v0.0.3 | — |
+| [prosystem](https://github.com/slash-proc/prosystem-retro-go-sd) | v0.0.3 | — |
+| [snes](https://github.com/slash-proc/snes-retro-go-sd) | v0.0.4 | — |
+| [stella2014](https://github.com/slash-proc/stella2014-retro-go-sd) | v0.1.1 | — |
+| [tama](https://github.com/slash-proc/tama-retro-go-sd) | v0.0.2 | — |
 
-Between them they exercise the shapes the model was designed for: one binary
-serving four launcher tabs, two systems from one binary, a system whose game is
-a `.cue` and its tracks, a BIOS folder that is not the ROM folder, a BIOS the
-project ships and one the user supplies, a required sidecar beside the core, a
-blob executed in place from mapped flash, a core that emulates nothing at all,
-a converter that turns one file into one file and another that turns a shelf of
-them into a shelf of them, and a homebrew whose data lives in a folder of its
-own.
+A dash means the project uses none of the optional fields: a binary, its
+metadata and nothing else.
 
 Breaking changes are still expected: nothing here is public yet, and the
 spec is worth more correct than stable.
