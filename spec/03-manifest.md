@@ -167,6 +167,7 @@ manifest — every `sha256` is 64 hex characters and the schema enforces it.
 | `title` | yes | Display name |
 | `docs` | no | Absolute `https://` URL. Where a human reads about this project |
 | `originalSystem` | no | The console this work came from. See below |
+| `originalName` | no | The title the work was published under. See below |
 | `cover` | no | Full-size box art, published beside the manifest |
 | `storage` | no | Which installs this works on: `["sd"]`, `["flash"]`, or both |
 | `source` | yes | `repo`, `commit`, `ref` — what built this |
@@ -219,6 +220,34 @@ is an emulator, and there is no single work for it to have come from. The
 generator refuses it and a checker warns. A single-system core is not
 automatically a port — `stella2014` emulates one console and originated
 nowhere — so the field stays the project's own claim to make.
+
+### The title is often not the work's name
+
+`originalSystem` alone is not enough to find anything. A lookup needs a name
+too, and the obvious candidate — `title` — is the *port's* name, which is
+frequently the engine's:
+
+| `title` | The work |
+|---|---|
+| `OpenLara` | Tomb Raider |
+| `Zelda 3` | The Legend of Zelda: A Link to the Past |
+| `Super Mario World` | Super Mario World |
+
+The first two send a scraper looking for something no library holds. `dos` plus
+`OpenLara` finds nothing; `dos` plus `Tomb Raider` finds the game.
+
+`originalName` is that name: the title the work was published under, written
+the way the work itself wrote it. It is a plain string, not localised — it is a
+lookup key for the original release, and a consumer that wants a translated
+name is better served by the library it just found the entry in.
+
+**Omit it when `title` is already the work's own name.** `Super Mario World`,
+`Celeste Classic` and `Doom` need nothing: repeating the title tells a consumer
+what it already had, so a checker warns when the two are equal. The field earns
+its place only where the port's name and the work's name differ.
+
+The same one-work rule applies: a core emulating several systems has no single
+work to name, and declaring it there is refused.
 
 | `cover` | Required | |
 |---|---|---|

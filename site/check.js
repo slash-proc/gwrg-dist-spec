@@ -164,10 +164,17 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   // work, and so is a core that ships a single game. A core declaring several
   // systems is an emulator, which is a port of nothing and has no one origin.
   for (const target of manifest.targets) {
-    if (manifest.originalSystem !== undefined && (target.systems ?? []).length > 1) {
-      say(WARN, `${tag}: originalSystem on a core that emulates several systems`,
-        `${target.id} declares ${target.systems.length} systems, so there is no single work to have come from`);
+    for (const field of ["originalSystem", "originalName"]) {
+      if (manifest[field] !== undefined && (target.systems ?? []).length > 1) {
+        say(WARN, `${tag}: ${field} on a core that emulates several systems`,
+          `${target.id} declares ${target.systems.length} systems, so there is no single work to describe`);
+      }
     }
+  }
+  // A name that only repeats the title says nothing a consumer did not have.
+  if (manifest.originalName !== undefined && manifest.originalName === manifest.title) {
+    say(WARN, `${tag}: originalName repeats title`,
+      `Both are "${manifest.title}". The field is for when the port's title is not the work's own name; omit it otherwise`);
   }
 
   // Where a core's converter output goes is derived from the system it belongs

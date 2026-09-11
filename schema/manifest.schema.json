@@ -11,6 +11,7 @@
     "title": { "type": "string", "minLength": 1 },
     "docs": { "type": "string", "pattern": "^https://[^\\s]+$" },
     "originalSystem": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "originalName": { "type": "string", "minLength": 1, "maxLength": 200 },
     "cover": { "$ref": "#/$defs/cover" },
     "storage": {
       "type": "array",
