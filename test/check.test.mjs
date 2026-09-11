@@ -329,11 +329,38 @@ r = await check("owner/repo", opts);
 expect("catches an unpublished cover",
   errorsOf(r).some((e) => e.includes("cover.png")), errorsOf(r).join(" | "));
 
-// Provenance belongs to a homebrew; a core says systems[] instead.
+// Provenance describes one work, not one kind. A core that ships a single game
+// -- Doom, from DOS -- is as much a port as any homebrew.
 set(emuIndex(), manifest({ targets: [emuTarget()], originalSystem: "snes" }));
 r = await check("owner/repo", opts);
-expect("warns about originalSystem on a core-only manifest",
+expect("a single-system core may state where its work came from",
+  !r.checks.some((c) => c.level === "warn" && c.label.includes("originalSystem")),
+  r.checks.map((c) => `${c.level}:${c.label}`).join(" | "));
+
+// Several systems means an emulator, which is a port of nothing.
+const multiSystem = emuTarget();
+multiSystem.systems = [
+  ...multiSystem.systems,
+  { id: "sms", longName: "Sega Master System", shortName: "SMS",
+    extensions: [".sms"], browse: "file", compression: false },
+];
+set(emuIndex(), manifest({ targets: [multiSystem], originalSystem: "snes" }));
+r = await check("owner/repo", opts);
+expect("warns about originalSystem on a core emulating several systems",
   r.checks.some((c) => c.level === "warn" && c.label.includes("originalSystem")),
+  r.checks.map((c) => `${c.level}:${c.label}`).join(" | "));
+
+// The name is for when the port's title is not the work's own name.
+set(emuIndex(), manifest({ targets: [emuTarget()], originalName: "Tomb Raider" }));
+r = await check("owner/repo", opts);
+expect("accepts an originalName that differs from the title",
+  !r.checks.some((c) => c.level === "warn" && c.label.includes("originalName")),
+  r.checks.map((c) => `${c.level}:${c.label}`).join(" | "));
+
+set(emuIndex(), manifest({ targets: [emuTarget()], originalName: "Minesweeper" }));
+r = await check("owner/repo", opts);
+expect("warns when originalName only repeats the title",
+  r.checks.some((c) => c.level === "warn" && c.label.includes("originalName")),
   r.checks.map((c) => `${c.level}:${c.label}`).join(" | "));
 
 // A BIOS the project ships is fetched and verified like any other named file,

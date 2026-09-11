@@ -321,6 +321,13 @@ const COVER = {
   sha256: "b".repeat(64), width: 800, height: 600,
 };
 good("accepts originalSystem", (d) => { d.originalSystem = "snes"; });
+// The title a work was published under, when the port's title is not it.
+// Free text, because a released title is not a slug: it carries spaces,
+// punctuation and case that a lookup needs kept.
+good("accepts originalName", (d) => { d.originalName = "Tomb Raider"; });
+good("accepts punctuation in an originalName", (d) => {
+  d.originalName = "The Legend of Zelda: A Link to the Past";
+});
 good("accepts a cover", (d) => { d.cover = structuredClone(COVER); });
 good("accepts a cover without dimensions", (d) => {
   d.cover = structuredClone(COVER);
@@ -328,6 +335,8 @@ good("accepts a cover without dimensions", (d) => {
   delete d.cover.height;
 });
 bad("rejects an originalSystem with a slash", (d) => { d.originalSystem = "roms/snes"; });
+bad("rejects an empty originalName", (d) => { d.originalName = ""; });
+bad("rejects a localised originalName", (d) => { d.originalName = { en: "Tomb Raider" }; });
 // Same rule as every other published file: a plain name resolved beside the
 // manifest, never an origin the mirror does not control.
 bad("rejects an absolute cover url", (d) => {
