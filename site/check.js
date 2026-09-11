@@ -158,13 +158,16 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     say(ERROR, `${tag}: index kind is not offered by any target`,
       `index says "${entry.kind}", targets offer ${[...kinds].join(", ")}`);
   }
-  // `originalSystem` says which console a homebrew's work came from, so a
-  // scraper can look it up in the right art library instead of searching by
-  // name. A core has no such provenance -- its system lives in
-  // `systems[]`, and a ROM's own folder already says which console it is.
-  if (manifest.originalSystem !== undefined && !kinds.has("homebrew")) {
-    say(WARN, `${tag}: originalSystem on a manifest with no homebrew target`,
-      "The field describes where a homebrew came from; a core declares systems[] instead");
+  // `originalSystem` says which console one work came from, so a scraper can
+  // look it up in the right art library instead of searching by name. It
+  // describes a work, not the software that runs it: a homebrew is always one
+  // work, and so is a core that ships a single game. A core declaring several
+  // systems is an emulator, which is a port of nothing and has no one origin.
+  for (const target of manifest.targets) {
+    if (manifest.originalSystem !== undefined && (target.systems ?? []).length > 1) {
+      say(WARN, `${tag}: originalSystem on a core that emulates several systems`,
+        `${target.id} declares ${target.systems.length} systems, so there is no single work to have come from`);
+    }
   }
 
   // Where a core's converter output goes is derived from the system it belongs

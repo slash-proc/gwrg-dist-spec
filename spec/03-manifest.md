@@ -166,7 +166,7 @@ manifest — every `sha256` is 64 hex characters and the schema enforces it.
 | `project` | yes | Matches `versions.json` |
 | `title` | yes | Display name |
 | `docs` | no | Absolute `https://` URL. Where a human reads about this project |
-| `originalSystem` | no | The console this work came from. Homebrew only |
+| `originalSystem` | no | The console this work came from. See below |
 | `cover` | no | Full-size box art, published beside the manifest |
 | `storage` | no | Which installs this works on: `["sd"]`, `["flash"]`, or both |
 | `source` | yes | `repo`, `commit`, `ref` — what built this |
@@ -191,21 +191,34 @@ directory, and the rest are what the destination filesystem cannot store.
 
 ## Provenance and cover art
 
-A homebrew is a native program under `/homebrews/`, so nothing about where it
-sits says which console it came from. A core has no such gap: a ROM lives
-under `roms/<system>/` and its core declares `systems[]`. That difference is
-the whole reason `originalSystem` exists.
+A port says nothing about where it came from. A homebrew is a native program
+under `/homebrews/`, and a game a core ships is a file under `roms/<system>/`
+named for the system it runs *on*, not the one it came *from*. Either way,
+anything wanting box art has to search blind by name. That gap is the whole
+reason `originalSystem` exists.
 
 `originalSystem` names the console the work originated on — `snes` for a Super
-Mario World port, `pico8` for a PICO-8 game. It is a hint for anything that
-wants to look the title up in the right art library rather than searching blind
-by name, and it is equally useful for grouping or filtering. Use the same
-identifiers `systems[].id` uses, but note the value space is wider: a homebrew
-may come from a console no core emulates. Omit the field for an original work
-written for the Game & Watch itself, which came from nowhere else.
+Mario World port, `pico8` for a PICO-8 game, `dos` for Tomb Raider or Doom. It
+is a hint for anything that wants to look the title up in the right art library
+rather than searching blind by name, and it is equally useful for grouping or
+filtering. Use the same identifiers `systems[].id` uses, but note the value
+space is wider: a work may come from a console no core emulates. Omit the field
+for an original work written for the Game & Watch itself, which came from
+nowhere else.
 
-Declaring it on a manifest with no `homebrew` target is a warning, not an
-error — a core states its systems in `systems[]`.
+**It describes one work, not the software that runs it.** A homebrew is always
+one work, so the field always makes sense there. A core usually is not: an
+emulator runs whatever the user supplies, and asking where *it* came from is
+the wrong question. But a core that is one game — Doom, which needs a ROM
+folder and a converter and so cannot be a homebrew, yet is as much a DOS port
+as any of them — has provenance exactly as real. Kind is not what decides this;
+being a single work is.
+
+A core declaring more than one system is the case that is certainly wrong: that
+is an emulator, and there is no single work for it to have come from. The
+generator refuses it and a checker warns. A single-system core is not
+automatically a port — `stella2014` emulates one console and originated
+nowhere — so the field stays the project's own claim to make.
 
 | `cover` | Required | |
 |---|---|---|
