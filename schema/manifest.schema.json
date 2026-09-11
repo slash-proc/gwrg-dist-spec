@@ -116,6 +116,7 @@
         "cheatExt": { "type": "string", "pattern": "^[A-Za-z0-9]+$" },
         "biosDir": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "bios": { "type": "array", "items": { "$ref": "#/$defs/bios" } },
+        "games": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/game" } },
         "runtime": { "$ref": "#/$defs/runtime" }
       }
     },
@@ -144,6 +145,21 @@
       },
       "dependentRequired": {
         "url": ["bytes", "sha256"]
+      }
+    },
+
+    "game": {
+      "type": "object",
+      "required": ["id", "filename", "url", "bytes", "sha256", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "filename": { "$ref": "#/$defs/filename" },
+        "url": { "$ref": "#/$defs/filename" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "label": { "$ref": "#/$defs/localised" },
+        "description": { "$ref": "#/$defs/localised" }
       }
     },
 

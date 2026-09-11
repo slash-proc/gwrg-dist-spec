@@ -322,6 +322,11 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
         if (!b.url) continue;
         files.push({ what: `${sys.id}/${b.url} (bios)`, ...b, filename: b.url });
       }
+      // A game the project ships: published like a BIOS it ships, but it
+      // installs into the system's ROM folder rather than /bios/.
+      for (const g of sys.games ?? []) {
+        files.push({ what: `${sys.id}/${g.url} (game)`, ...g, filename: g.url });
+      }
     }
     // Published and hashed like an artifact, but never installed.
     for (const sym of target.symbols ?? []) {
@@ -359,6 +364,8 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
         const names = Array.isArray(b.filename) ? b.filename : [b.filename];
         for (const n of names) place(`bios/${sys.biosDir ?? sys.id}/`, n, "bios");
       }
+      // Never biosDir: a game is a game, and lands where the launcher browses.
+      for (const g of sys.games ?? []) place(`roms/${sys.id}/`, g.filename, "game");
     }
     // A fixed output installs beside the binary for a homebrew, and into the
     // system's ROM folder for a core. A derived name is not knowable here.

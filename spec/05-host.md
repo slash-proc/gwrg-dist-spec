@@ -62,6 +62,12 @@ Forcing the extension is the load-bearing rule. The install set is a flat
 directory, so a user-supplied stem entering it is untrusted input — a WAD named
 `doom.bin` must never land where a core binary goes.
 
+**Place a shipped game in `roms/<system id>/`.** A `games[]` entry is published
+by the project and installs like an artifact, but into the folder the launcher
+browses rather than beside the binary. It is not `biosDir`'s business: that key
+moves BIOS files only, and a system whose BIOS lives elsewhere still keeps its
+games under its own id.
+
 **Place a homebrew's data under `dataDir` when it declares one.** The binary
 still goes where it always went; only the data moves, into
 `<install dir>/<dataDir>/`, and a file with a `subdir` goes deeper still,

@@ -50,6 +50,7 @@ what to play is looking for "Game Boy Advance".
 | `cheatExt` | no | No leading dot: `ggcodes`, `pceplus`, `mcf` |
 | `biosDir` | no | BIOS folder key, when it is not `id` |
 | `bios` | no | Files that are not games. Supplied by the user, or shipped |
+| `games` | no | Games the project ships. See below |
 
 `systems[]` is required when `kind` is `core` and forbidden when `kind` is
 `homebrew`. A homebrew is one program; it has no launcher tab of its own.
@@ -131,6 +132,49 @@ The PC Engine case shows why this is a per-system field rather than a per-file
 one: `pce` and `pcecd` are two systems from one core, sharing one BIOS folder.
 A path on each BIOS entry would repeat the same folder on every file and let
 two files in the same system disagree.
+
+### A project may ship a game itself
+
+Some games are free to pass on. Doom's shareware episode has been
+redistributable since 1993, and a Doom core that ships it is a core a user can
+install and play without owning anything. The same is true of a demo disc, a
+homebrew title, or a test cartridge a core's author wrote.
+
+`games[]` is the ROM-folder counterpart of a shipped `bios[]`, and works the
+same way: the file is published beside the manifest, mirrored, and hash-checked
+like every other named file.
+
+```json
+{
+  "id": "doom1-shareware",
+  "filename": "Doom (Shareware).whd",
+  "url": "Doom (Shareware).whd",
+  "bytes": 3373180,
+  "sha256": "…",
+  "label": { "en": "Doom (shareware episode)" }
+}
+```
+
+It installs to `roms/<system id>/` — the folder the launcher browses, never
+`biosDir`. A game is a game; only BIOS files answer to that key.
+
+Unlike `bios[]`, there is no unpublished form. `url`, `bytes` and `sha256` are
+required, because an entry without them would describe a game the user already
+has, and a game the user already has needs no manifest entry — they put it on
+the card themselves. That is also why the generator refuses a declaration with
+no file behind it, and a file with nothing declaring it.
+
+**It does not make `needsUserFiles` false.** That flag answers "must the user
+supply something to get what this project offers", and for Doom the answer
+stays yes: the shareware episode is three of the nine episodes, and the
+converter exists for the WADs a user owns. A shipped game widens what an
+install does out of the box; it does not replace what the user brings. A core
+whose shipped game really is the whole offering simply has no required tool
+input and no user-supplied BIOS, so the flag is already false on its own.
+
+Ship only what the licence allows. The spec cannot check this, and a
+redistributable original does not make a converted derivative redistributable
+— that depends on the licence, not on the conversion.
 
 ### The names are not localised
 
