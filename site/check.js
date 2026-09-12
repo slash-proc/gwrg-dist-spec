@@ -204,7 +204,16 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     (t.systems ?? []).some((sys) =>
       (sys.bios ?? []).some((b) =>
         !b.url && (b.required === true || (b.requiredFor ?? []).length > 0))));
-  const needsFiles = manifest.tools.some((t) => t.inputs.some((i) => i.required)) || needsBios;
+  // A tool the target does not require asks the user for nothing: uses[].required
+  // is "false if the install works without it", which is what a project that
+  // ships a game and offers the converter for the user's own declares.
+  // inputs[].required answers whether the tool can run, not whether the install
+  // needs it.
+  const toolsById = new Map(manifest.tools.map((t) => [t.id, t]));
+  const needsTool = manifest.targets.some((t) =>
+    (t.uses ?? []).some((u) =>
+      u.required && (toolsById.get(u.tool)?.inputs ?? []).some((i) => i.required)));
+  const needsFiles = needsTool || needsBios;
   if (entry.needsUserFiles !== undefined && entry.needsUserFiles !== needsFiles) {
     say(ERROR, `${tag}: needsUserFiles disagrees with the manifest`,
       `index says ${entry.needsUserFiles}, manifest implies ${needsFiles}`);

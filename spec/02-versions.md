@@ -67,15 +67,25 @@ followed by function pointers — so 840 bytes is a table of 210 entries. Since
 fields are only ever appended, "needs at least 840 bytes" and "needs at least
 the first 210 entries" say the same thing.
 
-`needsUserFiles` is true when **any tool declares a required input, or any
-system declares a required BIOS**. Both mean the same thing to a user: they have
-to go and find a file before this will work.
+`needsUserFiles` is true when **a tool the target requires declares a required
+input, or any system declares a required BIOS the project does not ship**. Both
+mean the same thing to a user: they have to go and find a file before this will
+work.
 
 Counting only tool inputs would be wrong for every core, because a core
 has `tools: []` — PC Engine CD would advertise `needsUserFiles: false` and then
 refuse to start without a System Card. A conditionally required BIOS
 (`requiredFor`) counts too: the flag warns that files may be needed, and it
 cannot know which games somebody intends to play.
+
+Note *a tool the target requires*. `uses[].required` is "false if the install
+works without it", and `inputs[].required` is whether the tool can run at all —
+two different questions that happened to have the same answer until a project
+could ship a game. Doom ships the shareware episode and converts the WADs a
+user owns: its converter still cannot run without a WAD (`inputs[].required`
+stays true), but the install no longer needs it (`uses[].required` is false), so
+the user is asked for nothing. Read the wrong one and every such project warns
+about files it is about to install itself.
 
 `kind`, `requiresAbi` and `needsUserFiles` are duplicated from the manifest so
 a picker can warn about incompatible firmware and label a version as needing a

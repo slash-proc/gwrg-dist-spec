@@ -575,7 +575,7 @@ ceilings a host rejects it against.
 | Field | Required | |
 |---|---|---|
 | `id` | yes | Role name, e.g. `base`, `language` |
-| `required` | yes | Boolean |
+| `required` | yes | Whether the tool can run without this file. Not whether the install needs the tool — that is `uses[].required` |
 | `allowMultiple` | yes | May the user supply more than one file |
 | `runPerFile` | no | Convert each file separately. Requires `allowMultiple` |
 | `maxCount` | no | Ceiling on how many files this slot accepts |

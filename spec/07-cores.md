@@ -164,13 +164,16 @@ has, and a game the user already has needs no manifest entry — they put it on
 the card themselves. That is also why the generator refuses a declaration with
 no file behind it, and a file with nothing declaring it.
 
-**It does not make `needsUserFiles` false.** That flag answers "must the user
-supply something to get what this project offers", and for Doom the answer
-stays yes: the shareware episode is three of the nine episodes, and the
-converter exists for the WADs a user owns. A shipped game widens what an
-install does out of the box; it does not replace what the user brings. A core
-whose shipped game really is the whole offering simply has no required tool
-input and no user-supplied BIOS, so the flag is already false on its own.
+**It can make `needsUserFiles` false, through `uses[].required`.** A project
+that ships a playable game installs and runs with nothing from the user, so it
+declares `uses[].required: false` on its converter: the install works without
+it. The converter itself is unchanged — it still cannot run without a file, so
+`inputs[].required` stays true — and it is still there for the games the user
+owns. Doom is the case: the shareware episode plays immediately, and the other
+episodes and Doom II need WADs you have.
+
+Do not flip the index flag by hand. It is derived, and a consumer that trusts
+it over the manifest would be misled; the checker refuses a disagreement.
 
 Ship only what the licence allows. The spec cannot check this, and a
 redistributable original does not make a converted derivative redistributable

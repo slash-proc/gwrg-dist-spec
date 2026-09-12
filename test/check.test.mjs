@@ -389,6 +389,38 @@ r = await check("owner/repo", opts);
 expect("catches an unpublished BIOS the manifest claims to ship",
   errorsOf(r).some((e) => e.includes("MSX.rom")), errorsOf(r).join(" | "));
 
+// needsUserFiles asks whether the INSTALL needs a file from the user, so it
+// follows uses[].required -- "false if the install works without it" -- and not
+// inputs[].required, which only says whether the tool can run.
+const withTool = (useRequired) => {
+  const m = manifest();
+  m.tools = [{
+    id: "conv", processor: { type: "wasm", version: 1 }, title: { en: "Conv" },
+    binary: { file: "c.wasm", url: "c.wasm", bytes: 1, sha256: HASH_ONE },
+    limits: { maxMemoryPages: 1, maxOutputBytes: 1 },
+    inputs: [{ id: "wad", required: true, allowMultiple: false, extensions: [".wad"], maxBytes: 1 }],
+    outputs: [{ id: "whd", filename: "out.whd", maxBytes: 1 }],
+  }];
+  m.targets[0].uses = [{ tool: "conv", outputs: ["whd"], required: useRequired }];
+  return m;
+};
+
+set({ ...index(), versions: index().versions.map((v) => ({ ...v, needsUserFiles: true })) },
+    withTool(true));
+r = await check("owner/repo", opts);
+expect("a required converter makes needsUserFiles true",
+  !r.checks.some((c) => c.label.includes("needsUserFiles disagrees")),
+  r.checks.filter((c) => c.level === "error").map((c) => c.label).join(" | "));
+
+// The project ships something playable, so the converter is for the user's own
+// files and the install works without it.
+set({ ...index(), versions: index().versions.map((v) => ({ ...v, needsUserFiles: false })) },
+    withTool(false));
+r = await check("owner/repo", opts);
+expect("a converter the install does not require leaves needsUserFiles false",
+  !r.checks.some((c) => c.label.includes("needsUserFiles disagrees")),
+  r.checks.filter((c) => c.level === "error").map((c) => c.label).join(" | "));
+
 // Cross-field rules the schema cannot state.
 const toolManifest = (mutate) => {
   const m = manifest();
