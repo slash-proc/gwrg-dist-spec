@@ -18,6 +18,7 @@ an SD card. No coordination with the tool's authors is required.
 | [Processor ABI](spec/04-processor.md) | How a converter is called |
 | [Offline bundles](spec/06-bundle.md) | Installing without a network |
 | [Cores](spec/07-cores.md) | The systems a core provides |
+| [Save-space audit](spec/08-save-space.md) | How to derive runtime save bounds |
 
 Tool authors also read [host requirements](spec/05-host.md), which are
 mandatory, not advisory.

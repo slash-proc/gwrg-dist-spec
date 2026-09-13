@@ -183,9 +183,30 @@
       "additionalProperties": false,
       "minProperties": 1,
       "properties": {
-        "savestateBytes": { "type": "integer", "minimum": 1 },
-        "saveBytes": { "type": "integer", "minimum": 1 }
+        "savestate": { "$ref": "#/$defs/runtimeFeature" },
+        "save": { "$ref": "#/$defs/runtimeFeature" }
       }
+    },
+
+    "runtimeFeature": {
+      "description": "Unsupported, supported with an unknown bound, or supported with a known byte bound",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["supported"],
+          "additionalProperties": false,
+          "properties": { "supported": { "const": false } }
+        },
+        {
+          "type": "object",
+          "required": ["supported"],
+          "additionalProperties": false,
+          "properties": {
+            "supported": { "const": true },
+            "bytes": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
     },
 
     "cover": {

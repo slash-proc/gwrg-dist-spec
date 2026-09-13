@@ -360,16 +360,30 @@ bad("rejects an unknown storage mode", (d) => { d.storage = ["emmc"]; });
 bad("rejects an empty storage list", (d) => { d.storage = []; });
 bad("rejects a repeated storage mode", (d) => { d.storage = ["sd", "sd"]; });
 good("accepts runtime on a target", (d) => {
-  d.targets[0].runtime = { savestateBytes: 77824, saveBytes: 8192 };
+  d.targets[0].runtime = {
+    savestate: { supported: true, bytes: 77824 },
+    save: { supported: true, bytes: 8192 },
+  };
+});
+good("accepts a supported feature whose bound is unknown", (d) => {
+  d.targets[0].runtime = { savestate: { supported: true } };
+});
+good("accepts an explicitly unsupported feature", (d) => {
+  d.targets[0].runtime = { savestate: { supported: false } };
 });
 // An empty object would say "I declare working space" while declaring none.
 bad("rejects an empty runtime", (d) => { d.targets[0].runtime = {}; });
-bad("rejects a zero savestate", (d) => {
-  d.targets[0].runtime = { savestateBytes: 0 };
+bad("rejects a zero savestate bound", (d) => {
+  d.targets[0].runtime = { savestate: { supported: true, bytes: 0 } };
+});
+bad("rejects bytes on an unsupported feature", (d) => {
+  d.targets[0].runtime = { save: { supported: false, bytes: 8192 } };
 });
 // No total: a minimum an installer could derive is not the manifest's to state.
 bad("rejects a precomputed total", (d) => {
-  d.targets[0].runtime = { savestateBytes: 1, minimumBytes: 2 };
+  d.targets[0].runtime = {
+    savestate: { supported: true, bytes: 1 }, minimumBytes: 2,
+  };
 });
 
 // The BIOS folder is a second key, not the ROM folder's: col vs bios/coleco.

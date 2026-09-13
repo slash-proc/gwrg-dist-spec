@@ -51,6 +51,7 @@ what to play is looking for "Game Boy Advance".
 | `biosDir` | no | BIOS folder key, when it is not `id` |
 | `bios` | no | Files that are not games. Supplied by the user, or shipped |
 | `games` | no | Games the project ships. See below |
+| `runtime` | no | Per-title save-space bounds. See the manifest spec |
 
 `systems[]` is required when `kind` is `core` and forbidden when `kind` is
 `homebrew`. A homebrew is one program; it has no launcher tab of its own.

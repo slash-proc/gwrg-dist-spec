@@ -310,17 +310,59 @@ it installs:
 
 | Field | Required | |
 |---|---|---|
-| `savestateBytes` | no | One savestate |
-| `saveBytes` | no | Save data — SRAM, a settings blob |
+| `savestate` | no | One savestate slot and its preview |
+| `save` | no | Other save data — SRAM, EEPROM, native saves, settings |
 
 It sits on a target for a homebrew and on a system for a core, because a
 savestate is the whole machine's state and an emulated machine differs per
 system.
 
-This exists for the flash-only case. On a device with no SD card the user has
-to size a filesystem by hand, and getting it right means knowing how big a
-savestate is — an internal number nobody should have to learn to install a
-game.
+Both entries describe **per installed title** features. Each has a required
+`supported` boolean and an optional `bytes` upper bound:
+
+```json
+"runtime": {
+  "savestate": { "supported": true },
+  "save": { "supported": true, "bytes": 131072 }
+}
+```
+
+This example says savestates work but their bound is not known, while other
+save data works and consumes at most 128 KiB. `{ "supported": false }` says
+the feature is not wired and creates no such data. `bytes` is forbidden in
+that case. Omitting `runtime` or one of its entries means the project made no
+claim; it does not mean unsupported.
+
+For known bounds, `savestate.bytes` is the space consumed by one slot. Include
+every file created for that slot, including its preview image when the firmware
+stores the preview separately. `save.bytes` is the combined maximum of the title's other
+persistent files: battery SRAM, EEPROM, memory cards, native savegames and
+title-specific settings written to the save filesystem. Do not count global
+firmware settings or filesystem metadata in either value.
+
+For a homebrew the installed program is the title. For a core the title is one
+ROM, disk set, or directory selected by the launcher. The value is therefore a
+worst case across all content accepted by that system: a Game Boy system must
+publish the largest supported cartridge RAM, even though many cartridges have
+none. ROM-dependent formats are exactly why this belongs on each system rather
+than once on the core target.
+
+The three states are deliberately explicit: unsupported, supported with an
+unknown bound, and supported with a known bound. This prevents a conservative
+planner from confusing incomplete metadata with zero use.
+
+These fields exist for sizing Retro-Go's LFS partition as well as flash-only
+installs. For each title a planner reserves:
+
+```
+save.bytes + savestate.bytes * plannedSlots
+```
+
+Add filesystem allocation and directory overhead afterwards. The number of
+slots is a firmware/user policy, not a property of the core, and so is not in
+the manifest. An automatic suspend slot counts as a slot if the chosen firmware
+creates one. See the [save-space audit](08-save-space.md) for derivation rules
+and examples from the current projects.
 
 **There is deliberately no total.** The manifest publishes the parts and an
 installer adds up the ones that apply to what the user is actually installing.
