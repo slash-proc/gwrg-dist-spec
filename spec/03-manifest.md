@@ -511,6 +511,7 @@ one.
 | `url` | yes | A plain filename, resolved beside this manifest |
 | `mapped` | no | `true` if this file must live at a real address, not in a filesystem |
 | `relocBase` | no | The sentinel address the blob was linked at. Only with `mapped` |
+| `lookupKey` | no | Exact opaque key passed by the core to `lookup_data_in_flash()`. Only with `mapped` |
 
 #### A file the device executes in place
 
@@ -542,6 +543,34 @@ manifest that carries it alone is wrong.
 { "filename": "gba.xip", "bytes": 448512, "sha256": "…", "url": "gba.xip",
   "mapped": true, "relocBase": 3737124864 }
 ```
+
+An artifact can also declare `lookupKey`, the exact string its core passes to the
+firmware ABI's `lookup_data_in_flash()` call. The key is opaque to the distribution
+format: it may contain a pre-relocation data CRC or other core-defined identity, and
+hosts must not parse or reconstruct it. It is optional even for a mapped artifact;
+omit it when that artifact does not use this lookup.
+
+```json
+{ "filename": "cold.xip", "bytes": 107512, "sha256": "…", "url": "cold.xip",
+  "mapped": true, "lookupKey": "cold:pico8:b13aeac5:107512" }
+```
+
+For a flash-only image, when `lookupKey` is present the builder prepares and places the
+mapped artifact as usual, then adds a record to LittleFS at
+`/data/mappedsidecars.bin`:
+
+```
+CRC32(lookupKey)<TAB>0xXIP_ADDRESS<TAB>SIZE<LF>
+```
+
+`CRC32(lookupKey)` is the CRC-32 of the exact UTF-8 bytes of the complete key, with
+initial seed 0, matching `crc32_le(0, key, strlen(key))` in Retro-Go. It is not the
+CRC of the mapped bytes. The address is the final memory-mapped address; size is the
+mapped artifact's byte count in decimal. The record lets the firmware resolve the
+same key to the prebuilt blob without a runtime cache write. An artifact without
+`lookupKey` still has mapped placement and relocation semantics but contributes no
+record to this file. SD installs do not use this file and retain their existing cache
+behavior.
 
 When it is present, the blob holds **absolute** addresses in the window
 `[relocBase, relocBase + bytes)`, and whoever places the file at a real address

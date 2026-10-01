@@ -133,6 +133,16 @@ word in range is a pointer and not a coincidence. Skipping this step is not a
 degraded install; it writes a blob full of addresses that cannot exist, and the
 device faults the first time it uses one.
 
+**Index mapped artifacts when `lookupKey` is present.** The manifest gives the
+exact opaque key the core passes to `lookup_data_in_flash()`; do not derive a
+different key from the filename or the data CRC. For a flash-only image, prepare
+and place the mapped blob, then write `/data/mappedsidecars.bin` in LittleFS with
+one `CRC32(key)<TAB>0xXIP_ADDRESS<TAB>SIZE<LF>` record. The first field is the
+CRC-32 of the complete key's UTF-8 bytes with seed 0, matching Retro-Go's
+`crc32_le(0, key, strlen(key))`; the address is the final XIP address and size is
+the blob length in decimal. If `lookupKey` is absent, do not add an index record
+for that artifact. This does not change SD lookup or cache-store behavior.
+
 **Store it whole, uncompressed, and patch it after the layout is fixed.**
 Three things follow from the file being memory rather than data, and each is a
 way to produce an image that looks finished and faults on first use.

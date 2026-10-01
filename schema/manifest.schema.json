@@ -174,8 +174,23 @@
         "sha256": { "$ref": "#/$defs/sha256" },
         "url": { "$ref": "#/$defs/filename" },
         "mapped": { "type": "boolean" },
-        "relocBase": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
-      }
+        "relocBase": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "lookupKey": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$",
+          "description": "Exact opaque key passed by the core to lookup_data_in_flash(); only with mapped=true"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["lookupKey"] },
+          "then": {
+            "required": ["mapped"],
+            "properties": { "mapped": { "const": true } }
+          }
+        }
+      ]
     },
 
     "runtime": {
