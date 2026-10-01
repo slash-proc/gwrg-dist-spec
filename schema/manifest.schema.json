@@ -187,7 +187,10 @@
           "if": { "required": ["lookupKey"] },
           "then": {
             "required": ["mapped"],
-            "properties": { "mapped": { "const": true } }
+            "properties": {
+              "mapped": { "const": true },
+              "bytes": { "minimum": 1, "maximum": 4294967295 }
+            }
           }
         }
       ]

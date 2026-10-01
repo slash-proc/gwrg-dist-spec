@@ -142,10 +142,10 @@ of records: little-endian `uint32_t file_crc32`, `flash_address`, and `file_size
 then `uint8_t valid` set to 1 and three reserved zero bytes. `file_crc32` is the
 CRC-32 of the complete key's UTF-8 bytes with seed 0, matching Retro-Go's
 `crc32_le(0, key, strlen(key))`; it is not the blob CRC. The address is the final
-XIP address and the size is the blob length. Write no more than 256 records, and
-include no SD-cache header or device-specific cache state. If `lookupKey` is
-absent, do not add an index record for that artifact. This does not change SD
-lookup or cache-store behavior.
+XIP address and the size is the blob length, which must be a positive uint32. Write
+no more than 256 records, and include no SD-cache header or device-specific cache
+state. If `lookupKey` is absent, do not add an index record for that artifact. This
+does not change SD lookup or cache-store behavior.
 
 **Store it whole, uncompressed, and patch it after the layout is fixed.**
 Three things follow from the file being memory rather than data, and each is a

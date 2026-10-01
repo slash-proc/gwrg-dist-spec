@@ -548,7 +548,8 @@ An artifact can also declare `lookupKey`, the exact string its core passes to th
 firmware ABI's `lookup_data_in_flash()` call. The key is opaque to the distribution
 format: it may contain a pre-relocation data CRC or other core-defined identity, and
 hosts must not parse or reconstruct it. It is optional even for a mapped artifact;
-omit it when that artifact does not use this lookup.
+omit it when that artifact does not use this lookup. When present, the artifact must
+be non-empty and fit in the firmware's 32-bit size field (`1` through `4294967295` bytes).
 
 ```json
 { "filename": "cold.xip", "bytes": 107512, "sha256": "…", "url": "cold.xip",
