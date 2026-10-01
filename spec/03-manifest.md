@@ -560,17 +560,24 @@ mapped artifact as usual, then adds a record to LittleFS at
 `/data/mappedsidecars.bin`:
 
 ```
-CRC32(lookupKey)<TAB>0xXIP_ADDRESS<TAB>SIZE<LF>
+struct gw_flash_file_metadata_t {
+    uint32_t file_crc32;    // CRC32(lookupKey)
+    uint32_t flash_address; // final XIP address
+    uint32_t file_size;     // mapped artifact size
+    uint8_t  valid;          // 1
+    uint8_t  reserved[3];    // zero
+};
 ```
 
 `CRC32(lookupKey)` is the CRC-32 of the exact UTF-8 bytes of the complete key, with
 initial seed 0, matching `crc32_le(0, key, strlen(key))` in Retro-Go. It is not the
-CRC of the mapped bytes. The address is the final memory-mapped address; size is the
-mapped artifact's byte count in decimal. The record lets the firmware resolve the
-same key to the prebuilt blob without a runtime cache write. An artifact without
-`lookupKey` still has mapped placement and relocation semantics but contributes no
-record to this file. SD installs do not use this file and retain their existing cache
-behavior.
+CRC of the mapped bytes. `mappedsidecars.bin` is a headerless array of these fixed-size,
+16-byte records in the order shown, with integers stored little-endian. It may contain up to
+256 records, matching `GW_FLASH_CACHE_MAX_FILES`; it has no metadata header or device-specific
+cache state. The record lets the firmware resolve the same key to the prebuilt blob without a
+runtime cache write. An artifact without `lookupKey` still has mapped placement and relocation
+semantics but contributes no record to this file. SD installs do not use this file and retain
+their existing cache behavior.
 
 When it is present, the blob holds **absolute** addresses in the window
 `[relocBase, relocBase + bytes)`, and whoever places the file at a real address
