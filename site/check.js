@@ -441,6 +441,14 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
   for (const target of manifest.targets) {
     for (const a of target.artifacts ?? []) {
       const base = a.relocBase;
+      if (a.lookupKey !== undefined && a.mapped !== true) {
+        say(ERROR, `${tag}: ${target.id}/${a.filename} declares lookupKey but is not mapped`,
+          "lookupKey identifies a mapped-data lookup and is only meaningful when the artifact is mapped");
+      }
+      if (a.lookupKey !== undefined && (a.bytes < 1 || a.bytes > 0xffffffff)) {
+        say(ERROR, `${tag}: ${target.id}/${a.filename} has an invalid lookupKey artifact size`,
+          "lookupKey records require a positive size that fits the firmware's uint32 file_size field");
+      }
       if (base !== undefined && a.mapped !== true) {
         say(ERROR, `${tag}: ${target.id}/${a.filename} declares relocBase but is not mapped`,
           `relocBase ${hex(base)} is the address the blob was linked at, which means nothing unless the file is mapped`);

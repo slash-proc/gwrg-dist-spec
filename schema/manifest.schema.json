@@ -181,19 +181,7 @@
           "pattern": "^[^\\u0000]+$",
           "description": "Exact opaque key passed by the core to lookup_data_in_flash(); only with mapped=true"
         }
-      },
-      "allOf": [
-        {
-          "if": { "required": ["lookupKey"] },
-          "then": {
-            "required": ["mapped"],
-            "properties": {
-              "mapped": { "const": true },
-              "bytes": { "minimum": 1, "maximum": 4294967295 }
-            }
-          }
-        }
-      ]
+      }
     },
 
     "runtime": {

@@ -605,6 +605,20 @@ expect("a mapped artifact counts in the install set",
   r.versions[0].targets[0].installed.includes("gba.xip"),
   JSON.stringify(r.versions[0].targets[0].installed));
 
+set(index(), xip({ mapped: true, lookupKey: "cold:pico8:b13aeac5:107512" }), withXip);
+r = await check("owner/repo", opts);
+expect("a mapped artifact with an exact lookupKey passes", r.summary.conformant, errorsOf(r).join(" | "));
+
+set(index(), xip({ lookupKey: "cold:pico8:b13aeac5:107512" }), withXip);
+r = await check("owner/repo", opts);
+expect("lookupKey without mapped is refused",
+  errorsOf(r).some((e) => e.includes("lookupKey but is not mapped")), errorsOf(r).join(" | "));
+
+set(index(), xip({ mapped: true, lookupKey: "cold:pico8:b13aeac5:107512", bytes: 0 }), withXip);
+r = await check("owner/repo", opts);
+expect("lookupKey on an empty mapped artifact is refused",
+  errorsOf(r).some((e) => e.includes("positive size")), errorsOf(r).join(" | "));
+
 set(index(), xip({ mapped: true }), withXip);
 r = await check("owner/repo", opts);
 expect("mapped with no relocBase is fine", r.summary.conformant, errorsOf(r).join(" | "));
