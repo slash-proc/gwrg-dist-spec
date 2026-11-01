@@ -665,6 +665,97 @@ r = await check("owner/repo", opts);
 expect("a mapped artifact still collides by name",
   errorsOf(r).some((e) => e.includes("differ only in case")), errorsOf(r).join(" | "));
 
+const routed = () => {
+ const m = toolManifest(t => {
+  Object.assign(t.inputs[0], {extensions:[".zip"],runPerFile:true,unmatched:"passthrough",variants:[{id:"known",sha1:"a".repeat(40),bytes:1}]});
+  t.outputs=[{id:"zip",extension:".zip",maxBytes:1}];
+ });
+ Object.assign(m.targets[0], {kind:"core",systems:[{id:"neogeo",longName:"Neo Geo",shortName:"Neo Geo",compression:false,extensions:[".zip"],browse:"file"}],uses:[{tool:"conv",outputs:["zip"],required:false}]});
+ return m;
+};
+set(index({versions:[{...index().versions[0],kind:"core"}]}),routed(),{"/dist/v0.1.2/c.wasm":Buffer.alloc(1)});
+r=await check("owner/repo",opts);
+expect("accepts valid passthrough routing", errorsOf(r).length === 0,errorsOf(r).join(" | "));
+for (const [name,mutate] of [
+ ["strict conflict",m=>m.tools[0].inputs[0].strict=false],
+ ["empty variants",m=>m.tools[0].inputs[0].variants=[]],
+ ["not per file",m=>m.tools[0].inputs[0].runPerFile=false],
+ ["duplicate hash",m=>m.tools[0].inputs[0].variants.push({...m.tools[0].inputs[0].variants[0],id:"duplicate"})],
+ ["homebrew destination",m=>m.targets[0].kind="homebrew"],
+ ["incompatible extension",m=>m.targets[0].systems[0].extensions=[".gno"]],
+ ["required converter",m=>m.targets[0].uses[0].required=true],
+]) {
+ const m=routed();mutate(m);set(index(),m);r=await check("owner/repo",opts);
+ expect(`rejects passthrough ${name}`,errorsOf(r).some(e=>/passthrough|unmatched ROMs|repeats a variant hash/.test(e)),errorsOf(r).join(" | "));
+}
+
+// Exact ABS32 metadata is optional in schema v1 and suppresses broad scans.
+const exactBytes = Buffer.alloc(8);
+exactBytes.writeUInt32LE(0xDEC00005, 0);
+exactBytes.writeUInt32LE(0xDEC00005, 4); // Numeric collision is deliberately unlisted.
+const exactFixture = () => {
+  const m = manifest();
+  m.targets[0].artifacts.push({filename:"exact.xip",url:"exact.xip",bytes:8,
+    sha256:createHash("sha256").update(exactBytes).digest("hex"),mapped:true,relocBase:0xDEC00000,
+    relocations:{method:"exact-relocation-sites",version:1,groups:[
+      {target:"EXACT.XIP",relocBase:0xDEC00000,offsets:[0]},
+    ]}});
+  return m;
+};
+set(index(),exactFixture(),{"/dist/v0.1.2/exact.xip":exactBytes});
+r=await check("owner/repo",opts);
+expect("accepts exact relocation sites with legacy scalar metadata",r.summary.conformant,errorsOf(r).join(" | "));
+for (const [name,mutate] of [
+  ["unknown method",a=>a.relocations.method="scan"],
+  ["unknown version",a=>a.relocations.version=2],
+  ["not mapped",a=>a.mapped=false],
+  ["missing target",a=>a.relocations.groups[0].target="missing.xip"],
+  ["unaligned",a=>a.relocations.groups[0].offsets=[2]],
+  ["out of bounds",a=>a.relocations.groups[0].offsets=[8]],
+  ["unsorted",a=>a.relocations.groups[0].offsets=[4,0]],
+  ["duplicate",a=>a.relocations.groups[0].offsets=[0,0]],
+]) {
+  const m=exactFixture();mutate(m.targets[0].artifacts[1]);
+  set(index(),m,{"/dist/v0.1.2/exact.xip":exactBytes});r=await check("owner/repo",opts);
+  expect(`rejects exact relocation ${name}`,errorsOf(r).length>0,errorsOf(r).join(" | "));
+}
+
+
+// SMG's streaming converter produces one mapped sidecar and references it
+// from a separate mapped code artifact. Check the complete install set.
+const streamFixture = () => {
+  const m = toolManifest(t => {
+    t.processor.extensions = {"range-input":1};
+    t.limits.maxOutputBytes = 16;
+    t.inputs[0] = {id:"disc",required:true,allowMultiple:false,extensions:[".iso"],maxBytes:4699979776};
+    t.outputs[0] = {id:"assets",filename:"assets.xip",maxBytes:16,mapped:true,
+      relocations:{method:"exact-relocation-sites",version:1,groups:[
+        {target:"assets.xip",relocBase:0xBEEF0000,offsets:[0]},
+      ]}};
+  });
+  m.targets[0].artifacts.push({filename:"code.xip",url:"code.xip",bytes:8,
+    sha256:createHash("sha256").update(exactBytes).digest("hex"),mapped:true,
+    relocations:{method:"exact-relocation-sites",version:1,groups:[
+      {target:"assets.xip",relocBase:0xBEEF0000,offsets:[0]},
+    ]}});
+  m.targets[0].uses = [{tool:"conv",outputs:["assets"],required:true}];
+  return m;
+};
+const streamIndex = index({versions:[{...index().versions[0],needsUserFiles:true}]});
+const streamFiles = {"/dist/v0.1.2/c.wasm":Buffer.alloc(1),"/dist/v0.1.2/code.xip":exactBytes};
+set(streamIndex, streamFixture(), streamFiles); r=await check("owner/repo",opts);
+expect("accepts range-input with cross-sidecar mapped output",r.summary.conformant,errorsOf(r).join(" | "));
+for (const [name,mutate] of [
+  ["non-mapped output",m=>m.tools[0].outputs[0].mapped=false],
+  ["missing output target",m=>m.targets[0].artifacts[1].relocations.groups[0].target="absent.xip"],
+  ["out-of-range output site",m=>m.tools[0].outputs[0].relocations.groups[0].offsets=[16]],
+  ["unaligned output site",m=>m.tools[0].outputs[0].relocations.groups[0].offsets=[2]],
+  ["overlapping cross-target site",m=>m.targets[0].artifacts[1].relocations.groups.push({target:"code.xip",relocBase:0xDEC00000,offsets:[0]})],
+]) {
+  const m=streamFixture(); mutate(m); set(streamIndex,m,streamFiles); r=await check("owner/repo",opts);
+  expect(`rejects streaming mapped output ${name}`,errorsOf(r).length>0,errorsOf(r).join(" | "));
+}
+
 server.close();
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

@@ -2,6 +2,12 @@
 
 `processor: { "type": "wasm", "version": 1 }`
 
+A tool may declare optional, independently versioned extensions, for example:
+`"extensions": { "range-input": 1 }`. The base ABI remains version 1. A host
+must reject any extension it does not implement before fetching or instantiating
+the module. With no `extensions` field, the base export set and behavior below
+are unchanged.
+
 A converter turns files the user supplies into files the installer writes. It
 is one `.wasm` binary.
 
@@ -65,9 +71,11 @@ checking against `outputs[]`.
 
 
 
-Every export is fixed by the ABI version. A `wasm`/`1` module has exactly
-these. The manifest does not list them; a host re-derives them from the binary
-and refuses a module that disagrees.
+The base exports above are fixed by the ABI version. A `wasm`/`1` module with
+no declared extensions has exactly these. A declared extension adds only its
+documented exports. The manifest does not list exports; a host re-derives the
+base and declared extension exports from the binary and refuses a module that
+disagrees. Unknown extensions are refused before the module is fetched.
 
 A "pointer" here is a `u32` offset into `memory.buffer`. Not a machine address.
 
@@ -100,6 +108,53 @@ the role its position and the project's own rules imply — and say so through
 `warnings`, rather than failing the run. Failing is for a file it cannot
 process at all, which is a different statement: not "I do not recognise this"
 but "this is not usable".
+
+## `range-input` extension version 1
+
+A converter that reads a large random-access file may declare
+`processor.extensions.range-input: 1`. This extension leaves every base export
+and its meaning intact and adds:
+
+```text
+input_stream_add(size_lo: u32, size_hi: u32) -> u32  register a host-backed input, return its handle
+input_request_index() -> u32                       handle being requested
+input_request_offset_lo() -> u32                   64-bit file offset, low word
+input_request_offset_hi() -> u32                   64-bit file offset, high word
+input_request_len() -> u32                         requested byte count
+input_request_buffer_ptr() -> u32                  destination in module memory
+input_supply(len: u32, success: u32) -> u32        resume the pending request
+```
+
+`input_stream_add` registers the size of one selected file without copying its
+contents. Its returned handle shares the same namespace as indices returned by
+`input_add`; the host associates each handle with exactly the file registered
+for it. The module resolves file roles from content as for ordinary inputs.
+The host still applies extension, size, and hash/variant checks before starting
+the run; it may hash a large file in bounded chunks.
+
+During the stepped path, `run_step()` returns `2` to request input. The host
+reads the request fields, validates the handle and that the non-empty range is
+inside the file, reads exactly that range, checks the requested buffer is inside
+WASM memory, copies the bytes there, and calls `input_supply(len, 1)`. A host
+must cap any one request at 256 MiB. The module may request ranges in any order
+and may request the same range more than once. It must wait for a successful
+`input_supply` before requesting another range or continuing conversion.
+
+`input_supply(len, 1)` accepts only the exact pending length. A host that
+cannot read the range terminates the run with an input error (or terminates its
+Worker on cancellation); it does not provide partial bytes. `input_supply`
+returning nonzero is a module error. A `run()` call cannot service a range
+request; hosts use the
+stepped path for this extension, and a range-enabled module returns an error
+from `run()` if it needs host input.
+
+The extension adds no imports. A browser host can satisfy requests with
+`File.slice(offset, offset + length)`; a local host can seek and read the same
+range from a file. The request offset is unsigned 64-bit, represented as two
+`u32` words, so inputs larger than 4 GiB remain addressable. A module without
+this declaration cannot export these functions; a module declaring it must
+export all seven with the signatures above. The verifier rejects missing,
+malformed, or undeclared extension exports.
 
 ## Progress
 

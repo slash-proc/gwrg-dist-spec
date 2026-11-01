@@ -207,6 +207,8 @@ An entry is either an extension or a group of two or more:
 "extensions": [".iso", [".cue", ".bin"]]   // both shapes, one list
 ```
 
+An extension may be a compound suffix such as `.p8.png`; include the full suffix when the launcher recognizes that form.
+
 **In a group the first entry is the file the launcher lists and the user picks;
 the rest travel with it.** A group of one is refused: that is a plain string
 written the long way, and two spellings of one thing is how a schema starts

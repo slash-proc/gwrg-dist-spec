@@ -125,6 +125,7 @@ function renderVersion(v) {
       if (i.allowMultiple) li.append(el("span", "tag", i.runPerFile ? "one run per file" : "multiple"));
       li.append(el("span", "muted",
         `${i.extensions.join(" ")} · ${(i.variants ?? []).length} known variant(s)`));
+      if (i.unmatched === "passthrough") li.append(el("span", "tag", "known hashes convert; others install unchanged"));
       inputs.append(li);
     }
     card.append(el("p", "sub", "Accepts"));

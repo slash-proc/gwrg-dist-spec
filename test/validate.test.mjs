@@ -517,5 +517,11 @@ bad("rejects relocBase on a cover", (d) => {
   d.cover = { filename: "c.png", bytes: 1, sha256: HASH, url: "c.png", relocBase: 0 };
 });
 
+const routed = structuredClone(full);
+routed.tools[0].inputs[0].unmatched = "passthrough";
+expect("accepts hash-selected routing field", validate(routed, manifestSchema), true);
+routed.tools[0].inputs[0].unmatched = "ignore";
+expect("rejects unknown unmatched policy", validate(routed, manifestSchema), false);
+
 console.log(failures ? `\n${failures} failed` : "\nall passed");
 process.exit(failures ? 1 : 0);

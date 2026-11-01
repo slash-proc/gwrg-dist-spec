@@ -86,7 +86,7 @@
       }
     },
 
-    "extension": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" },
+    "extension": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+(?:\\.[A-Za-z0-9]+)*$" },
 
     "subpath": {
       "type": "string",
@@ -164,6 +164,60 @@
       }
     },
 
+    "exactRelocations": {
+      "type": "object",
+      "required": [
+        "method",
+        "version",
+        "groups"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "enum": [
+            "exact-relocation-sites"
+          ]
+        },
+        "version": {
+          "enum": [
+            1
+          ]
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "target",
+              "relocBase",
+              "offsets"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "target": {
+                "$ref": "#/$defs/filename"
+              },
+              "relocBase": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "offsets": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967292
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
     "artifact": {
       "type": "object",
       "required": ["filename", "bytes", "sha256", "url"],
@@ -175,6 +229,7 @@
         "url": { "$ref": "#/$defs/filename" },
         "mapped": { "type": "boolean" },
         "relocBase": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "relocations": { "$ref": "#/$defs/exactRelocations" },
         "lookupKey": {
           "type": "string",
           "minLength": 1,
@@ -253,7 +308,12 @@
           "additionalProperties": false,
           "properties": {
             "type": { "enum": ["wasm"] },
-            "version": { "type": "integer", "minimum": 1 }
+            "version": { "type": "integer", "minimum": 1 },
+            "extensions": {
+              "type": "object",
+              "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+              "additionalProperties": { "type": "integer", "minimum": 1 }
+            }
           }
         },
         "title": { "$ref": "#/$defs/localised" },
@@ -307,8 +367,9 @@
         "maxCount": { "type": "integer", "minimum": 1 },
         "label": { "$ref": "#/$defs/localised" },
         "description": { "$ref": "#/$defs/localised" },
-        "extensions": { "type": "array", "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" } },
+        "extensions": { "type": "array", "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+(?:\\.[A-Za-z0-9]+)*$" } },
         "maxBytes": { "type": "integer", "minimum": 1 },
+        "unmatched": { "enum": ["passthrough"] },
         "strict": { "type": "boolean" },
         "variants": { "type": "array", "items": { "$ref": "#/$defs/variant" } }
       }
@@ -341,6 +402,9 @@
         "extension": { "$ref": "#/$defs/extension" },
         "subdir": { "$ref": "#/$defs/subpath" },
         "maxBytes": { "type": "integer", "minimum": 1 },
+        "mapped": { "type": "boolean" },
+        "relocBase": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "relocations": { "$ref": "#/$defs/exactRelocations" },
         "label": { "$ref": "#/$defs/localised" },
         "description": { "$ref": "#/$defs/localised" }
       }

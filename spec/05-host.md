@@ -88,6 +88,30 @@ beside the binary for a homebrew, in `roms/<system id>/` for a core.
 cannot have one. Terminating the Worker is the only way to stop a run and the
 only way to reclaim its memory.
 
+**Route hash-selected inputs before loading the converter.** When an input
+sets `unmatched: "passthrough"`, apply the rules in
+[Hash-selected conversion](03-manifest.md#hash-selected-conversion). Hash the
+file and check declared variant sizes. Only matching files enter the converter;
+install unmatched files unchanged into the resolved system's ROM directory.
+Check input limits and extensions for both branches, validate original filenames,
+and include both branches in the same case-insensitive collision check. An
+all-unmatched selection must not fetch, instantiate, or allocate WASM. Refuse a
+workflow using this policy if you do not implement it.
+
+**Negotiate processor extensions before fetching the module.** A missing
+`processor.extensions` means the base ABI only. Refuse any extension/version
+this host does not implement. Do this before downloading or instantiating the
+converter, so an older host never attempts to allocate a large file for a tool
+it cannot run.
+
+For `range-input: 1`, keep the selected file in host storage. On `run_step() ==
+2`, validate the returned handle, non-empty offset/length range, 256 MiB request
+ceiling, and destination pointer against the registered file and current WASM
+memory. Read exactly the requested bytes, copy them to the module, and resume
+with `input_supply(len, 1)`. A short read or invalid request fails the run. Hash
+large inputs for the normal strict/variant gate in bounded chunks before the
+converter run; never materialize the whole file just to identify it.
+
 **Enforce `strict` yourself.** Hash each file the user supplies and compare it
 against that input's `variants[]`. On no match: refuse the file when the input
 is `strict` (the default), and when it is not, accept it but tell the user it

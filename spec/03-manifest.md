@@ -511,6 +511,7 @@ one.
 | `url` | yes | A plain filename, resolved beside this manifest |
 | `mapped` | no | `true` if this file must live at a real address, not in a filesystem |
 | `relocBase` | no | The sentinel address the blob was linked at. Only with `mapped` |
+| `relocations` | no | Versioned exact ABS32 site groups. Only with `mapped`; overrides word scanning |
 | `lookupKey` | no | Exact opaque key passed by the core to `lookup_data_in_flash()`. Only with `mapped` |
 
 #### A file the device executes in place
@@ -583,11 +584,65 @@ their existing cache behavior.
 When it is present, the blob holds **absolute** addresses in the window
 `[relocBase, relocBase + bytes)`, and whoever places the file at a real address
 must add `actual - relocBase` to every 32-bit word falling in that window,
-masking bit 0 first because a function pointer carries the Thumb bit there. The address is
-impossible on purpose. No real pointer can equal `0xDEC00000` and ordinary data
-essentially never contains one, so a word in that window is not a plausible
-pointer into the blob — it is certainly one, which is what makes a blind word
-scan safe.
+masking bit 0 first because a function pointer carries the Thumb bit there. This legacy scan is safe only when the publisher has verified that every
+matching word is a pointer. Opaque geometry, images, trigonometric tables, and
+animation data can contain numeric words in the same range. A large sentinel
+window does not distinguish them. Use exact relocation sites when that invariant
+does not hold.
+
+#### Exact relocation sites (optional, version 1)
+
+A mapped artifact, or a fixed-name mapped converter output, may declare:
+
+```json
+"relocations": {
+  "method": "exact-relocation-sites",
+  "version": 1,
+  "groups": [
+    { "target": "smg_code.xip", "relocBase": 3737124864, "offsets": [16, 40] },
+    { "target": "smg_assets.xip", "relocBase": 3203334144, "offsets": [72] }
+  ]
+}
+```
+
+Offsets are byte offsets **inside the source file**, not CPU addresses. Each
+site holds a little-endian absolute 32-bit pointer into the named target. A
+self reference names the source file. The target must be a mapped file in the
+same install directory, declared by this target's artifacts or selected
+fixed-name converter outputs. Match target filenames case-insensitively; reject
+ambiguous names and missing targets. A mapped output requires a fixed filename
+and is supported for homebrew data, not derived per-ROM outputs.
+
+The version-1 method is ABS32 only. Offsets must be sorted, unique, four-byte
+aligned, and satisfy `offset + 4 <= actual source length`. Groups must have
+unique target filenames, and a site cannot appear in two groups. `relocBase`
+and `relocBase + actual target length` must fit the 32-bit address space. A
+host must validate these rules and every site's original pointer before
+writing an image. Mask the pointer's Thumb bit for the range check, require it
+in `[group.relocBase, group.relocBase + actual target length)`, then add
+`actual target address - group.relocBase`, preserving bit zero. Both bases must
+be four-byte aligned. Use actual converter output lengths, not `maxBytes`, for
+this check.
+
+When `relocations` is present it replaces **all** generic word scanning for that
+source, even if the source also declares the legacy scalar `relocBase`. Patch
+only listed sites and leave every other byte unchanged. Compute all target
+placements before patching; references between sidecars are resolved from that
+single layout. Keep pristine source bytes and reapply the table after a layout
+change. A host moving already relocated files instead must know every target's
+previous address; it must refuse when that information is unavailable.
+
+Hosts must reject unknown methods/versions and malformed tables. An absent
+`relocations` retains the existing scalar `relocBase` behavior. This adds
+optional fields to schema version 1 and changes neither the converter ABI nor
+its output bytes. Older schema-validating hosts reject the unfamiliar fields;
+hosts which ignore unknown manifest fields need updating before installing
+such projects. They must not silently fall back to scanning or install raw
+unresolved references.
+
+On ordinary SD installs, copy pristine sidecars and retain these declarations;
+the runtime owns cache placement and must implement the declared relocation.
+A host that pre-seeds an SD flash cache must honor the exact tables too.
 
 Two consumers read this field differently, and the difference is the reason it
 exists.
@@ -632,7 +687,7 @@ tools sit at the top level and not inside a target.
 | Field | Required | |
 |---|---|---|
 | `id` | yes | Referenced by `uses[].tool` |
-| `processor` | yes | `type` and `version`. Currently `wasm` / `1` |
+| `processor` | yes | `type`, `version`, and optional versioned `extensions`. Currently `wasm` / `1` |
 | `title` | yes | Localised object. `en` required |
 | `binary` | yes | `file`, `url`, `bytes`, `sha256` |
 | `limits` | yes | Ceilings the host enforces |
@@ -641,7 +696,18 @@ tools sit at the top level and not inside a target.
 | `outputs` | yes | What a successful run produces |
 
 `processor.type` and `processor.version` are separate so a future non-WASM
-processor is a new type rather than a schema break.
+processor is a new type rather than a schema break. A processor may also declare
+versioned optional ABI extensions under `processor.extensions`. An extension
+adds only the exports and behavior named by that extension; it does not change
+the base ABI. Hosts must reject an extension they do not implement before
+fetching or instantiating the converter. An absent `extensions` field means the
+original processor contract exactly.
+
+The first extension is `"range-input": 1` (see [processor ABI](04-processor.md)).
+It lets the module request bounded ranges from a selected input without the
+host placing the whole file in WASM memory. It keeps `processor.version` and
+`abi_version()` at 1. A host that does not implement it must refuse the tool;
+it must not try to pass the large file through `alloc`.
 
 `binary` groups the four fields a host must check **before** instantiating.
 
@@ -664,15 +730,63 @@ ceilings a host rejects it against.
 | `maxBytes` | yes | Reject larger files without running |
 | `variants` | no | Known-good files: `id`, `sha1`, optional `bytes` |
 | `strict` | no | Default `true`. Refuse a file matching no variant |
+| `unmatched` | no | `"passthrough"`: convert matching variants only; install other files unchanged |
 
 **Roles are resolved by the module from file content, never from order or from
 a name the host supplies.** `inputs[]` exists so a UI can ask for the right
 files and reject an obviously wrong one before spending a run. It is not how
 the module learns what it was given.
 
+#### Hash-selected conversion
+
+An input with `"unmatched": "passthrough"` routes conversion in the host.
+Hash the complete input file using SHA-1 and compare case-insensitively with
+`variants[].sha1`; if a variant declares `bytes`, its size must also match.
+A match is converted normally. A non-match is installed as a ROM with its
+original bytes and filename, without fetching or instantiating the converter.
+Do not apply a variant filename or the output extension to a passed-through file.
+
+For example, a Neo Geo ZIP input can declare:
+
+```json
+{
+  "id": "game",
+  "required": true,
+  "allowMultiple": true,
+  "runPerFile": true,
+  "extensions": [".zip"],
+  "maxBytes": 134217728,
+  "unmatched": "passthrough",
+  "variants": [{ "id": "encrypted-dump", "sha1": "0123456789abcdef0123456789abcdef01234567" }]
+}
+```
+
+The hash above is illustrative; publishers supply measured file hashes.
+
+This policy requires nonempty `variants`, exactly one tool input with
+`allowMultiple: true` and `runPerFile: true`, and exactly one output declaring
+`extension`. It cannot be combined with `strict`: unmatched files are accepted
+for direct installation, not accepted as converter inputs. Every target using
+this tool must be a core, use its sole output, and resolve one destination system
+whose `extensions` accept every input extension. `uses[].required` must be false,
+because direct ROM installation does not require conversion.
+
+Input extension, `maxBytes`, and `maxCount` checks apply before routing and to
+both branches. Passed-through files share destination and collision checks with
+converted files and ordinary ROMs. A matched file that fails conversion is an
+error; never fall back to passing it through. Unmatched does not mean known-good
+or playable. A host must describe it as installed unchanged rather than verified.
+If a host does not implement this policy, it must refuse this tool workflow;
+it must not ignore the field and convert or reject all files instead.
+
+ZIP hashes identify exact archives. Recompressing, renaming members, or changing
+member order may make an otherwise equivalent archive unmatched. Publishers
+list verified archive variants rather than inferring encryption from filenames.
+
 #### `strict`
 
-`variants[]` says which files an input recognises. `strict` says what to do
+For inputs without `unmatched: "passthrough"`, `variants[]` says which files an
+input recognises. `strict` says what to do
 about a file that is none of them:
 
 - `strict: true`, the default — refuse it. zelda3's `language` input is strict:

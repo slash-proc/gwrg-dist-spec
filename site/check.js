@@ -466,9 +466,83 @@ async function checkVersion(entry, base, manifestSchema, index, say, opts) {
     }
   }
 
+  // Exact tables also describe references between mapped sidecars. Converter
+  // output lengths are bounded here and checked against actual bytes at install.
+  for (const target of manifest.targets) {
+    const outputs = (target.uses ?? []).flatMap(use => {
+      const tool = manifest.tools.find(tool => tool.id === use.tool);
+      return (tool?.outputs ?? []).filter(out => (use.outputs ?? []).includes(out.id));
+    });
+    const files = [...(target.artifacts ?? []), ...outputs.filter(out => out.filename)];
+    for (const out of outputs) {
+      if ((out.mapped === true || out.relocations !== undefined || out.relocBase !== undefined) &&
+          (!out.filename || target.kind !== "homebrew")) {
+        say(ERROR, `${tag}: ${target.id}/${out.id} has invalid mapped output placement`,
+          "Mapped converter outputs require a homebrew target and a fixed filename");
+      }
+    }
+    for (const source of files) {
+      if (source.relocations === undefined) continue;
+      if (source.mapped !== true) {
+        say(ERROR, `${tag}: ${source.filename} declares relocations but is not mapped`, "Exact sites require mapped placement");
+        continue;
+      }
+      const used = new Set(), targets = new Set();
+      for (const group of source.relocations.groups) {
+        const name = group.target.toLowerCase();
+        const matches = files.filter(file => file.filename.toLowerCase() === name);
+        if (targets.has(name) || matches.length !== 1 || matches[0].mapped !== true) {
+          say(ERROR, `${tag}: ${source.filename} has an invalid relocation target ${group.target}`,
+            "Targets must resolve uniquely to a mapped file in this install set");
+        }
+        targets.add(name);
+        const size = matches[0]?.bytes ?? matches[0]?.maxBytes ?? 0;
+        if (group.relocBase % 4 || group.relocBase + size > 0x100000000) {
+          say(ERROR, `${tag}: ${source.filename} has an invalid exact relocation range`, "Target bases must be aligned and fit in 32 bits");
+        }
+        let previous = -1;
+        for (const offset of group.offsets) {
+          if (offset % 4 || offset <= previous || used.has(offset) ||
+              offset + 4 > (source.bytes ?? source.maxBytes)) {
+            say(ERROR, `${tag}: ${source.filename} has an invalid relocation site ${offset}`,
+              "Sites must be sorted, unique, aligned, and inside the source");
+          }
+          previous = offset; used.add(offset);
+        }
+      }
+    }
+  }
+
   // Cross-field rules JSON Schema cannot state.
   for (const tool of manifest.tools) {
     for (const inp of tool.inputs ?? []) {
+      if (inp.unmatched === "passthrough") {
+        const outputs = tool.outputs ?? [];
+        if (inp.strict !== undefined || !inp.variants?.length ||
+            tool.inputs.length !== 1 || !inp.allowMultiple || !inp.runPerFile ||
+            outputs.length !== 1 || !outputs[0].extension) {
+          say(ERROR, `${tag}: ${tool.id}/${inp.id} has invalid passthrough routing`,
+            "Requires variants, one per-file input, one derived output, and no strict field");
+        }
+        const seen = new Set();
+        for (const v of inp.variants ?? []) {
+          const hash = v.sha1.toLowerCase();
+          if (seen.has(hash)) say(ERROR, `${tag}: ${tool.id}/${inp.id} repeats a variant hash`, "Hash routing must resolve one variant");
+          seen.add(hash);
+        }
+        for (const target of manifest.targets ?? []) {
+          for (const use of (target.uses ?? []).filter(u => u.tool === tool.id)) {
+            const systems = target.systems ?? [];
+            const sys = use.system ? systems.find(s => s.id === use.system) : systems.length === 1 ? systems[0] : undefined;
+            if (target.kind !== "core" || use.required !== false || !sys ||
+                use.outputs.length !== 1 || use.outputs[0] !== outputs[0]?.id ||
+                inp.extensions.some(e => !(sys.extensions ?? []).some(x => x.toLowerCase() === e.toLowerCase()))) {
+              say(ERROR, `${tag}: ${target.id}/${tool.id} cannot install unmatched ROMs`,
+                "Requires an optional core use of the sole output and a system accepting all input extensions");
+            }
+          }
+        }
+      }
       if (inp.runPerFile && !inp.allowMultiple) {
         say(ERROR, `${tag}: ${tool.id}/${inp.id} converts each file but takes only one`,
           "runPerFile needs allowMultiple: a single-file slot has nothing to iterate");
